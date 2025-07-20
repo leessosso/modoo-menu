@@ -12,8 +12,6 @@ import {
 } from '@mui/material';
 import {
     Restaurant,
-    LocalCafe,
-    ShoppingCart,
     QrCode,
     Person,
     Logout,

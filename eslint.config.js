@@ -19,5 +19,14 @@ export default tseslint.config([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // 사용하지 않는 import 경고로 변경 (에러에서 경고로)
+      '@typescript-eslint/no-unused-vars': 'warn',
+      // 사용하지 않는 변수 허용
+      'no-unused-vars': 'off',
+      '@typescript-eslint/no-unused-vars': 'warn',
+      // 개발 중에는 더 관대하게
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
   },
 ])

@@ -12,7 +12,6 @@ import {
     Chip,
 } from '@mui/material';
 import {
-    Store,
     Add,
     Edit,
     MenuBook,
@@ -20,7 +19,6 @@ import {
     Person,
     Logout,
     TrendingUp,
-    Schedule,
 } from '@mui/icons-material';
 import { useAuth } from '../../context/AuthContext';
 
