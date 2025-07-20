@@ -42,7 +42,7 @@ type StoreStore = StoreState & StoreActions;
 
 export const useStoreStore = create<StoreStore>()(
     devtools(
-        (set, get) => ({
+        (set) => ({
             // 초기 상태
             stores: [],
             currentStore: null,

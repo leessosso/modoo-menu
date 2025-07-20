@@ -27,7 +27,7 @@ import { useStoreStore } from '../../stores/storeStore';
 const StoreOwnerDashboard: React.FC = () => {
     const navigate = useNavigate();
     const { user, logout } = useAuthStore();
-    const { stores, fetchStores, isLoading } = useStoreStore();
+    const { stores, fetchStores } = useStoreStore();
 
     useEffect(() => {
         if (user) {
@@ -43,9 +43,7 @@ const StoreOwnerDashboard: React.FC = () => {
         navigate('/store-register');
     };
 
-    const handleViewStores = () => {
-        navigate('/store-list');
-    };
+
 
     const menuItems = [
         {
