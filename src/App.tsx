@@ -1,95 +1,87 @@
-import { useState, useEffect } from 'react'
-import './App.css'
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import { theme } from './theme';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LoginScreen from './components/screens/LoginScreen';
+import RegisterScreen from './components/screens/RegisterScreen';
+import DashboardScreen from './components/screens/DashboardScreen';
+import StoreOwnerDashboard from './components/screens/StoreOwnerDashboard';
+import ProtectedRoute from './components/common/ProtectedRoute';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
-function App() {
-  const [count, setCount] = useState(0)
-  const [currentTime, setCurrentTime] = useState(new Date())
+// 메인 앱 컴포넌트
+const AppContent: React.FC = () => {
+  const { isAuthenticated, isLoading, user } = useAuth();
 
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrentTime(new Date())
-    }, 1000)
+  if (isLoading) {
+    return <LoadingSpinner message="앱을 시작하는 중..." />;
+  }
 
-    return () => clearInterval(timer)
-  }, [])
+  // 사용자 역할에 따른 대시보드 결정
+  const getDashboardRoute = () => {
+    if (!user) return '/login';
+
+    switch (user.role) {
+      case 'store_owner':
+        return '/store-dashboard';
+      case 'admin':
+        return '/admin-dashboard';
+      default:
+        return '/dashboard';
+    }
+  };
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <h1>🚀 Flutter WebView React App</h1>
-        <p>React + TypeScript + Vite로 만든 웹앱</p>
-      </header>
+    <Router>
+      <Routes>
+        {/* 공개 라우트 */}
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <LoginScreen />
+        } />
+        <Route path="/register" element={
+          isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <RegisterScreen />
+        } />
 
-      <main className="app-main">
-        <section className="hero-section">
-          <h2>✨ 환영합니다!</h2>
-          <p>이 웹앱은 Flutter WebView에서 실행되고 있습니다.</p>
-        </section>
+        {/* 보호된 라우트 */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <DashboardScreen />
+          </ProtectedRoute>
+        } />
 
-        <section className="features-section">
-          <div className="feature-card">
-            <h3>📱 모바일 친화적</h3>
-            <p>Flutter 앱에서 완벽하게 작동합니다.</p>
-          </div>
+        {/* 매장관리자 대시보드 */}
+        <Route path="/store-dashboard" element={
+          <ProtectedRoute>
+            <StoreOwnerDashboard />
+          </ProtectedRoute>
+        } />
 
-          <div className="feature-card">
-            <h3>⚡ 빠른 성능</h3>
-            <p>Vite로 빌드되어 빠른 로딩 속도를 제공합니다.</p>
-          </div>
+        {/* 기본 리다이렉트 */}
+        <Route path="/" element={
+          isAuthenticated ? <Navigate to={getDashboardRoute()} replace /> : <Navigate to="/login" replace />
+        } />
 
-          <div className="feature-card">
-            <h3>🎨 모던 디자인</h3>
-            <p>CSS Grid와 Flexbox를 활용한 반응형 디자인</p>
-          </div>
-        </section>
+        {/* 404 페이지 */}
+        <Route path="*" element={
+          <Navigate to={isAuthenticated ? getDashboardRoute() : "/login"} replace />
+        } />
+      </Routes>
+    </Router>
+  );
+};
 
-        <section className="interactive-section">
-          <h3>🔄 인터랙티브 기능</h3>
-          <div className="counter-section">
-            <button
-              className="counter-button"
-              onClick={() => setCount(count + 1)}
-            >
-              카운터: {count}
-            </button>
-            <button
-              className="reset-button"
-              onClick={() => setCount(0)}
-            >
-              리셋
-            </button>
-          </div>
-        </section>
+// 루트 앱 컴포넌트
+const App: React.FC = () => {
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </ThemeProvider>
+  );
+};
 
-        <section className="time-section">
-          <h3>⏰ 실시간 시계</h3>
-          <div className="clock">
-            {currentTime.toLocaleTimeString()}
-          </div>
-        </section>
-
-        <section className="links-section">
-          <h3>🔗 유용한 링크</h3>
-          <div className="links">
-            <a href="https://react.dev" target="_blank" rel="noopener noreferrer">
-              React 공식 문서
-            </a>
-            <a href="https://vite.dev" target="_blank" rel="noopener noreferrer">
-              Vite 공식 문서
-            </a>
-            <a href="https://flutter.dev" target="_blank" rel="noopener noreferrer">
-              Flutter 공식 문서
-            </a>
-          </div>
-        </section>
-      </main>
-
-      <footer className="app-footer">
-        <p>© 2024 Flutter WebView React App</p>
-        <p>Built with ❤️ using React + TypeScript + Vite</p>
-      </footer>
-    </div>
-  )
-}
-
-export default App
+export default App;

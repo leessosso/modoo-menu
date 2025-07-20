@@ -1,0 +1,265 @@
+# 모두의 메뉴 - 프로젝트 기획서
+
+## 📋 프로젝트 개요
+
+### 프로젝트명
+**모두의 메뉴** - 오프라인 식당/카페 메뉴 주문 시스템
+
+### 프로젝트 목적
+오프라인 식당이나 카페에서 고객이 QR코드를 스캔하거나 태블릿을 통해 매장을 선택하고, 해당 매장의 메뉴를 확인하여 주문할 수 있는 웹 기반 시스템을 개발합니다.
+
+### 기술 스택
+- **Frontend**: React 19 + TypeScript + Vite
+- **UI Framework**: Material-UI (MUI) v5
+- **배포**: Flutter WebView 내장
+- **상태 관리**: React Context API
+- **데이터 저장**: LocalStorage (오프라인 환경 고려)
+- **라우팅**: React Router DOM v7
+
+## 🎯 핵심 기능
+
+### 1. 사용자 인증 시스템 ✅
+- 로그인/회원가입 기능
+- 역할 기반 접근 제어 (고객/매장관리자)
+- 세션 관리 및 자동 로그인
+
+### 2. 매장관리자 시스템 ✅
+- 매장관리자 대시보드
+- 매장 목록 관리
+- 매장 등록 및 수정 기능
+- 실시간 통계 및 주문 관리
+
+### 3. 매장 선택 기능 (예정)
+- QR코드 스캔을 통한 매장 자동 선택
+- 매장 목록에서 수동 선택
+- 매장 정보 표시 (이름, 설명, 영업시간 등)
+
+### 4. 메뉴 브라우징 (예정)
+- 카테고리별 메뉴 분류
+- 메뉴 상세 정보 (가격, 설명, 이미지, 알레르기 정보)
+- 메뉴 검색 기능
+- 인기 메뉴 하이라이트
+
+### 5. 주문 시스템 (예정)
+- 장바구니 기능
+- 수량 조절
+- 옵션 선택 (사이드 메뉴, 음료 크기 등)
+- 주문 요약 및 확인
+- 주문 완료 화면
+
+### 6. 사용자 경험
+- 직관적인 터치 인터페이스
+- 빠른 로딩 속도
+- 오프라인 환경 지원
+- 다국어 지원 (한국어/영어)
+
+## 📱 화면 구성
+
+### ✅ 구현 완료된 화면
+
+#### 1. 인증 화면
+- **로그인 화면**: 이메일/비밀번호 로그인, 테스트 계정 제공
+- **회원가입 화면**: 사용자 정보 입력, 역할 선택
+- **로딩 화면**: 앱 시작 시 로딩 스피너
+
+#### 2. 대시보드 화면
+- **고객 대시보드**: QR코드 스캔, 매장 선택, 주문 내역, 즐겨찾기
+- **매장관리자 대시보드**: 매장 목록, 빠른 액션 메뉴, 통계 요약
+
+### 🚧 구현 예정 화면
+
+#### 3. 매장 관리 화면
+- **매장 등록 화면**: 새 매장 정보 입력
+- **매장 수정 화면**: 기존 매장 정보 편집
+- **메뉴 관리 화면**: 카테고리 및 메뉴 관리
+
+#### 4. 고객 화면
+- **매장 선택 화면**: QR코드 스캔, 매장 목록
+- **매장 정보 화면**: 매장 상세 정보
+- **메뉴 목록 화면**: 카테고리별 메뉴 표시
+- **메뉴 상세 화면**: 메뉴 상세 정보 및 옵션 선택
+- **장바구니 화면**: 선택한 메뉴 관리
+- **주문 확인 화면**: 주문 내역 요약
+- **주문 완료 화면**: 주문 성공 메시지
+
+## 🎨 UI/UX 디자인 가이드
+
+### 디자인 원칙
+- **모바일 우선**: 태블릿과 모바일에서 최적화
+- **직관성**: 누구나 쉽게 사용할 수 있는 인터페이스
+- **접근성**: 다양한 사용자를 고려한 디자인
+- **일관성**: 전체 앱에서 일관된 디자인 언어
+
+### MUI 테마 설정 ✅
+- **Primary**: #FF6B35 (따뜻한 오렌지)
+- **Secondary**: #2C3E50 (다크 블루)
+- **Error**: #E74C3C (빨간색)
+- **Success**: #27AE60 (초록색)
+- **Warning**: #F39C12 (주황색)
+- **Info**: #3498DB (파란색)
+
+### 컴포넌트 스타일
+- **Button**: 그라데이션 배경, 호버 효과
+- **Card**: 둥근 모서리, 그림자 효과
+- **Paper**: 일관된 패딩과 마진
+- **Typography**: 계층적 텍스트 스타일
+
+## 📊 데이터 구조
+
+### 사용자 정보 ✅
+```typescript
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+  role: 'customer' | 'store_owner' | 'admin';
+  stores?: string[]; // 매장관리자의 경우
+  createdAt: Date;
+  lastLoginAt: Date;
+}
+```
+
+### 매장 정보
+```typescript
+interface Store {
+  id: string;
+  name: string;
+  description: string;
+  logo: string;
+  address: string;
+  phone: string;
+  businessHours: string;
+  categories: Category[];
+  isOpen: boolean;
+  ownerId: string; // 매장관리자 ID
+}
+```
+
+### 카테고리
+```typescript
+interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  items: MenuItem[];
+}
+```
+
+### 메뉴 아이템
+```typescript
+interface MenuItem {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  category: string;
+  options: MenuOption[];
+  allergens: string[];
+  isPopular: boolean;
+  isAvailable: boolean;
+}
+```
+
+### 주문 정보
+```typescript
+interface Order {
+  id: string;
+  items: CartItem[];
+  totalAmount: number;
+  orderNumber: string;
+  estimatedWaitTime: number;
+  timestamp: Date;
+  status: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+}
+```
+
+## 🚀 개발 단계
+
+### Phase 1: 기본 구조 및 인증 시스템 ✅ (완료)
+- [x] 프로젝트 설정 (React + TypeScript + Vite)
+- [x] MUI 설치 및 테마 설정
+- [x] 기본 컴포넌트 구조 설계
+- [x] 라우팅 시스템 구축 (React Router DOM)
+- [x] 인증 시스템 구현 (Context API)
+- [x] 역할 기반 라우팅 (고객/매장관리자)
+- [x] 로그인/회원가입 화면
+- [x] 대시보드 화면 (고객/매장관리자)
+
+### Phase 2: 매장관리자 시스템 ✅ (완료)
+- [x] 매장관리자 대시보드
+- [x] 매장 목록 표시
+- [x] 빠른 액션 메뉴
+- [x] 통계 요약
+
+### Phase 3: 매장 관리 기능 (진행 예정)
+- [ ] 매장 등록 화면
+- [ ] 매장 수정 화면
+- [ ] 메뉴 관리 화면
+- [ ] 카테고리 관리
+
+### Phase 4: 고객 기능 (진행 예정)
+- [ ] 매장 선택 화면
+- [ ] 매장 정보 화면
+- [ ] 메뉴 목록 화면
+- [ ] 메뉴 상세 화면
+- [ ] 장바구니 기능
+- [ ] 주문 시스템
+
+### Phase 5: Firebase 연동 (진행 예정)
+- [ ] Firebase Authentication
+- [ ] Firestore 데이터베이스
+- [ ] Firebase Storage (이미지)
+- [ ] 실시간 데이터 동기화
+
+### Phase 6: 최적화 및 테스트 (진행 예정)
+- [ ] 성능 최적화
+- [ ] 오프라인 지원
+- [ ] 사용자 테스트
+- [ ] 버그 수정
+
+## 📁 현재 폴더 구조
+
+```
+src/
+├── components/
+│   ├── common/
+│   │   ├── LoadingSpinner.tsx
+│   │   ├── ErrorBoundary.tsx
+│   │   └── Layout.tsx
+│   ├── layout/
+│   │   ├── Header.tsx
+│   │   ├── Footer.tsx
+│   │   └── Navigation.tsx
+│   └── screens/
+│       ├── SplashScreen.tsx
+│       ├── StoreSelection.tsx
+│       ├── StoreDetail.tsx
+│       ├── MenuList.tsx
+│       ├── MenuDetail.tsx
+│       ├── Cart.tsx
+│       ├── OrderConfirm.tsx
+│       └── OrderComplete.tsx
+├── hooks/
+│   ├── useCart.ts
+│   ├── useStores.ts
+│   └── useOrders.ts
+├── context/
+│   ├── CartContext.tsx
+│   └── StoreContext.tsx
+├── types/
+│   ├── store.ts
+│   ├── menu.ts
+│   └── order.ts
+├── utils/
+│   ├── storage.ts
+│   ├── validation.ts
+│   └── helpers.ts
+├── theme/
+│   └── index.ts
+└── data/
+    ├── stores.ts
+    ├── menus.ts
+    └── categories.ts
+``` 
