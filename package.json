@@ -8,9 +8,13 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "build:no-lint": "tsc -b && vite build",
+    "build:analyze": "tsc -b && vite build --mode analyze",
+    "preview": "vite preview",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "preview": "vite preview"
+    "type-check": "tsc --noEmit",
+    "bundle-analyzer": "npx vite-bundle-analyzer dist",
+    "size-check": "npm run build && ls -lah dist/assets/js/"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

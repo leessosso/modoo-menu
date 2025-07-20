@@ -8,19 +8,19 @@ interface ProtectedRouteProps {
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-    const { isAuthenticated, isLoading } = useAuthStore();
-    const location = useLocation();
+  const { isAuthenticated, isLoading } = useAuthStore();
+  const location = useLocation();
 
-    if (isLoading) {
-        return <LoadingSpinner message="인증 확인 중..." />;
-    }
+  if (isLoading) {
+    return <LoadingSpinner message="인증 확인 중..." />;
+  }
 
-    if (!isAuthenticated) {
-        // 로그인 후 원래 페이지로 리다이렉트하기 위해 현재 위치를 저장
-        return <Navigate to="/login" state={{ from: location }} replace />;
-    }
+  if (!isAuthenticated) {
+    // 로그인 후 원래 페이지로 리다이렉트하기 위해 현재 위치를 저장
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-    return <>{children}</>;
+  return <>{children}</>;
 };
 
 export default ProtectedRoute; 
