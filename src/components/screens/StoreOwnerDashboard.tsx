@@ -38,16 +38,35 @@ const StoreOwnerDashboard: React.FC = () => {
     const handleLogout = async () => {
         try {
             console.log('로그아웃 버튼 클릭됨');
-            await logout();
-            console.log('로그아웃 완료');
 
-            // 로그아웃 후 강제로 로그인 페이지로 리다이렉트
-            navigate('/login', { replace: true });
+            // 로컬 상태 즉시 클리어 (웹뷰에서 가장 안전한 방법)
+            localStorage.clear();
+            sessionStorage.clear();
+
+            // Firebase 로그아웃 시도 (실패해도 무시)
+            try {
+                await logout();
+                console.log('Firebase 로그아웃 완료');
+            } catch (firebaseError) {
+                console.warn('Firebase 로그아웃 실패 (무시됨):', firebaseError);
+            }
+
+            // 웹뷰 환경에서는 페이지 전체 리로드가 더 안전함
+            window.location.href = window.location.origin + window.location.pathname + '#/login';
+            window.location.reload();
         } catch (error) {
             console.error('로그아웃 중 오류:', error);
 
-            // 오류가 발생해도 로그인 페이지로 리다이렉트
-            navigate('/login', { replace: true });
+            // 최후의 수단: 모든 것을 클리어하고 리로드
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+            } catch (storageError) {
+                console.warn('스토리지 클리어 실패:', storageError);
+            }
+
+            window.location.href = window.location.origin + window.location.pathname + '#/login';
+            window.location.reload();
         }
     };
 

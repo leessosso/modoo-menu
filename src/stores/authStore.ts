@@ -248,12 +248,14 @@ export const useAuthStore = create<AuthStore>()(
                             error: null,
                         });
 
-                        // localStorage에서 인증 정보 명시적 삭제 (웹뷰 환경에서 중요)
+                        // localStorage에서 모든 인증 관련 정보 삭제 (웹뷰 환경에서 중요)
                         try {
                             localStorage.removeItem('auth-storage');
-                            console.log('로컬스토리지 인증 정보 삭제됨');
+                            localStorage.removeItem('store-storage'); // 매장 정보도 삭제
+                            sessionStorage.clear(); // 세션 스토리지도 클리어
+                            console.log('모든 저장소 정보 삭제됨');
                         } catch (storageError) {
-                            console.warn('로컬스토리지 삭제 실패 (무시됨):', storageError);
+                            console.warn('저장소 삭제 실패 (무시됨):', storageError);
                         }
 
                         console.log('로그아웃 완료 - 모든 상태 초기화됨');

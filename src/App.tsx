@@ -12,6 +12,7 @@ import StoreRegisterScreen from './components/screens/StoreRegisterScreen';
 import StoreListScreen from './components/screens/StoreListScreen';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 // 메인 앱 컴포넌트
 const AppContent: React.FC = () => {
@@ -103,10 +104,12 @@ const AppContent: React.FC = () => {
 // 루트 앱 컴포넌트
 const App: React.FC = () => {
   return (
-    <ThemeProvider theme={theme}>
-      <CssBaseline />
-      <AppContent />
-    </ThemeProvider>
+    <ErrorBoundary>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <AppContent />
+      </ThemeProvider>
+    </ErrorBoundary>
   );
 };
 
