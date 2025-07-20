@@ -40,9 +40,14 @@ const StoreOwnerDashboard: React.FC = () => {
             console.log('로그아웃 버튼 클릭됨');
             await logout();
             console.log('로그아웃 완료');
+
+            // 로그아웃 후 강제로 로그인 페이지로 리다이렉트
+            navigate('/login', { replace: true });
         } catch (error) {
             console.error('로그아웃 중 오류:', error);
-            // 오류가 발생해도 사용자에게는 정상적으로 처리된 것처럼 보이게 함
+
+            // 오류가 발생해도 로그인 페이지로 리다이렉트
+            navigate('/login', { replace: true });
         }
     };
 

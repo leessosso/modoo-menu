@@ -248,7 +248,15 @@ export const useAuthStore = create<AuthStore>()(
                             error: null,
                         });
 
-                        console.log('로그아웃 완료 - 로컬 상태 초기화됨');
+                        // localStorage에서 인증 정보 명시적 삭제 (웹뷰 환경에서 중요)
+                        try {
+                            localStorage.removeItem('auth-storage');
+                            console.log('로컬스토리지 인증 정보 삭제됨');
+                        } catch (storageError) {
+                            console.warn('로컬스토리지 삭제 실패 (무시됨):', storageError);
+                        }
+
+                        console.log('로그아웃 완료 - 모든 상태 초기화됨');
                     } catch (error) {
                         console.error('로그아웃 중 예상치 못한 오류:', error);
 
@@ -259,6 +267,13 @@ export const useAuthStore = create<AuthStore>()(
                             isLoading: false,
                             error: null,
                         });
+
+                        // 오류 발생 시에도 로컬스토리지 삭제 시도
+                        try {
+                            localStorage.removeItem('auth-storage');
+                        } catch (storageError) {
+                            console.warn('로컬스토리지 삭제 실패:', storageError);
+                        }
                     }
                 },
 
@@ -272,6 +287,8 @@ export const useAuthStore = create<AuthStore>()(
 
                 initializeAuth: () => {
                     return onAuthStateChanged(auth, async (firebaseUser) => {
+                        console.log('Firebase Auth 상태 변화:', firebaseUser ? '로그인됨' : '로그아웃됨');
+
                         if (firebaseUser) {
                             // Firestore에서 사용자 정보 가져오기 시도
                             let user = await getUserFromFirestore(firebaseUser.uid);
@@ -288,12 +305,16 @@ export const useAuthStore = create<AuthStore>()(
                                 user,
                                 isAuthenticated: true,
                                 isLoading: false,
+                                error: null,
                             });
                         } else {
+                            // 로그아웃 시 완전한 상태 초기화
+                            console.log('Firebase Auth 로그아웃 감지 - 상태 초기화');
                             set({
                                 user: null,
                                 isAuthenticated: false,
                                 isLoading: false,
+                                error: null,
                             });
                         }
                     });

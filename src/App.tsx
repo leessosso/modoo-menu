@@ -27,6 +27,9 @@ const AppContent: React.FC = () => {
     };
   }, [initializeAuth]);
 
+  // 디버깅을 위한 상태 로그
+  console.log('App 상태:', { isAuthenticated, isLoading, isHydrated, user: user?.email });
+
   // persist 미들웨어가 초기화되지 않았거나 로딩 중이면 로딩 스피너 표시
   if (!isHydrated || isLoading) {
     return <LoadingSpinner message="앱을 시작하는 중..." />;
