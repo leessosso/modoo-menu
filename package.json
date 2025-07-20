@@ -1,8 +1,9 @@
 {
-  "name": "my-web-app",
+  "name": "modoo-menu",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "homepage": "https://leessosso.github.io/modoo-menu",
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
