@@ -8,8 +8,8 @@ import {
     Button,
     Alert,
     CircularProgress,
-    Link,
 } from '@mui/material';
+import { Link } from 'react-router-dom';
 import { Email, Lock, Person, Phone, Visibility, VisibilityOff, Business, Person as PersonIcon } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import type { RegisterCredentials } from '../../types/auth';
@@ -180,7 +180,7 @@ const RegisterScreen: React.FC = () => {
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="text.secondary">
                             이미 계정이 있으신가요?{' '}
-                            <Link href="/login" underline="hover">
+                            <Link to="/login" style={{ textDecoration: 'underline' }}>
                                 로그인
                             </Link>
                         </Typography>
