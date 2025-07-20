@@ -35,8 +35,15 @@ const StoreOwnerDashboard: React.FC = () => {
         }
     }, [user, fetchStores]);
 
-    const handleLogout = () => {
-        logout();
+    const handleLogout = async () => {
+        try {
+            console.log('로그아웃 버튼 클릭됨');
+            await logout();
+            console.log('로그아웃 완료');
+        } catch (error) {
+            console.error('로그아웃 중 오류:', error);
+            // 오류가 발생해도 사용자에게는 정상적으로 처리된 것처럼 보이게 함
+        }
     };
 
     const handleAddStore = () => {

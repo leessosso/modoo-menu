@@ -229,15 +229,36 @@ export const useAuthStore = create<AuthStore>()(
 
                 logout: async () => {
                     try {
-                        await signOut(auth);
+                        console.log('로그아웃 시작');
+
+                        // Firebase Auth 로그아웃 시도
+                        try {
+                            await signOut(auth);
+                            console.log('Firebase Auth 로그아웃 성공');
+                        } catch (firebaseError) {
+                            console.warn('Firebase Auth 로그아웃 실패 (무시됨):', firebaseError);
+                            // Firebase 로그아웃 실패해도 로컬 상태는 초기화
+                        }
+
+                        // 로컬 상태 초기화 (웹뷰 환경에서도 안전하게 작동)
                         set({
                             user: null,
                             isAuthenticated: false,
                             isLoading: false,
                             error: null,
                         });
+
+                        console.log('로그아웃 완료 - 로컬 상태 초기화됨');
                     } catch (error) {
-                        console.error('로그아웃 오류:', error);
+                        console.error('로그아웃 중 예상치 못한 오류:', error);
+
+                        // 오류가 발생해도 로컬 상태는 초기화
+                        set({
+                            user: null,
+                            isAuthenticated: false,
+                            isLoading: false,
+                            error: null,
+                        });
                     }
                 },
 
