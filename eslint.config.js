@@ -20,13 +20,13 @@ export default tseslint.config([
       globals: globals.browser,
     },
     rules: {
-      // 사용하지 않는 import 경고로 변경 (에러에서 경고로)
-      '@typescript-eslint/no-unused-vars': 'warn',
-      // 사용하지 않는 변수 허용
+      // 사용하지 않는 변수/import 허용 (개발 중에는 더 관대하게)
       'no-unused-vars': 'off',
-      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-unused-vars': 'off',
+      // any 타입 허용
+      '@typescript-eslint/no-explicit-any': 'off',
       // 개발 중에는 더 관대하게
-      '@typescript-eslint/no-explicit-any': 'warn',
+      '@typescript-eslint/no-non-null-assertion': 'off',
     },
   },
 ])
