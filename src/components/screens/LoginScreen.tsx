@@ -11,11 +11,11 @@ import {
     Link,
 } from '@mui/material';
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthStore } from '../../stores/authStore';
 import type { LoginCredentials } from '../../types/auth';
 
 const LoginScreen: React.FC = () => {
-    const { login, isLoading, error, clearError } = useAuth();
+    const { login, isLoading, error, clearError } = useAuthStore();
     const [credentials, setCredentials] = useState<LoginCredentials>({
         email: '',
         password: '',

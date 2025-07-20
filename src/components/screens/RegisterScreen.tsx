@@ -11,11 +11,11 @@ import {
     Link,
 } from '@mui/material';
 import { Email, Lock, Person, Phone, Visibility, VisibilityOff } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthStore } from '../../stores/authStore';
 import type { RegisterCredentials } from '../../types/auth';
 
 const RegisterScreen: React.FC = () => {
-    const { register, isLoading, error, clearError } = useAuth();
+    const { register, isLoading, error, clearError } = useAuthStore();
     const [credentials, setCredentials] = useState<RegisterCredentials>({
         email: '',
         password: '',

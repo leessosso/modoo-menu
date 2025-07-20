@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { theme } from './theme';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuthStore } from './stores/authStore';
 import LoginScreen from './components/screens/LoginScreen';
 import RegisterScreen from './components/screens/RegisterScreen';
 import DashboardScreen from './components/screens/DashboardScreen';
@@ -13,9 +13,10 @@ import LoadingSpinner from './components/common/LoadingSpinner';
 
 // 메인 앱 컴포넌트
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, isHydrated } = useAuthStore();
 
-  if (isLoading) {
+  // persist 미들웨어가 초기화되지 않았거나 로딩 중이면 로딩 스피너 표시
+  if (!isHydrated || isLoading) {
     return <LoadingSpinner message="앱을 시작하는 중..." />;
   }
 
@@ -77,9 +78,7 @@ const App: React.FC = () => {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <AppContent />
     </ThemeProvider>
   );
 };

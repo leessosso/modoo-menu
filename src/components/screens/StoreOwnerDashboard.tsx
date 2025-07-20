@@ -20,10 +20,10 @@ import {
     Logout,
     TrendingUp,
 } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthStore } from '../../stores/authStore';
 
 const StoreOwnerDashboard: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout } = useAuthStore();
 
     // 임시 매장 데이터 (나중에 Firebase에서 가져올 예정)
     const mockStores = [

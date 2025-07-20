@@ -18,10 +18,10 @@ import {
     History,
     Favorite,
 } from '@mui/icons-material';
-import { useAuth } from '../../context/AuthContext';
+import { useAuthStore } from '../../stores/authStore';
 
 const DashboardScreen: React.FC = () => {
-    const { user, logout } = useAuth();
+    const { user, logout } = useAuthStore();
 
     const handleLogout = () => {
         logout();
