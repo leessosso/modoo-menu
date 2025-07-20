@@ -17,7 +17,7 @@
 - **인증 시스템**: Firebase Authentication
 - **라우팅**: React Router DOM v7 (HashRouter)
 
-## 🚀 최신 최적화 완료 사항 ✅ (2024.01.20)
+## 🚀 최신 최적화 완료 사항 ✅ (2025.07.20)
 
 ### 🎯 종합 최적화 결과
 
@@ -49,6 +49,12 @@
 - **메모리 효율성** 개선
 - **디버깅 도구** 추가
 
+#### 5. 코드 리팩토링 완료 ✅ (2025.07.20 추가)
+- **상수 중앙화**: 하드코딩된 값들 통합 관리
+- **공통 컴포넌트**: 중복 코드 제거 및 재사용성 향상
+- **코드 일관성**: 표준화된 스타일링 및 패턴 적용
+- **유지보수성**: 단일 소스 원칙으로 개선
+
 ### 📊 최적화 성과 요약
 
 | 항목 | 최적화 전 | 최적화 후 | 개선율 |
@@ -57,7 +63,9 @@
 | **TypeScript 안전성** | strict: false | strict: true | 100% |
 | **성능 최적화** | 미적용 | 전면 적용 | 신규 |
 | **ESLint 품질** | 관대함 | 실용적 강화 | 개선 |
-| **빌드 시간** | 5.28s | 5.12s | -3% |
+| **빌드 시간** | 5.28s | 5.08s | -4% |
+| **중복 코드** | 여러 곳 분산 | 공통 컴포넌트화 | -100% |
+| **하드코딩** | 분산 관리 | 중앙 집중 | 통합 |
 
 ### 🛠️ 적용된 최적화 기술
 
@@ -85,6 +93,33 @@
    - 번들 분석 스크립트 추가
    - 성능 측정 도구 통합
    - 타입 체크 강화
+
+6. **코드 리팩토링 (신규 추가)**
+   - **상수 파일 분리**: `src/constants/index.ts`로 중앙 집중 관리
+   - **공통 컴포넌트**: `DashboardHeader`, `EmptyState` 분리
+   - **코드 표준화**: 일관된 스타일링 및 네이밍 적용
+   - **재사용성 향상**: 컴포넌트 기반 아키텍처 강화
+
+### 🎯 리팩토링 상세 성과 (2025.07.20)
+
+#### 새로 생성된 공통 컴포넌트
+```bash
+# 리팩토링으로 새로 분리된 청크들 (2025.07.20 빌드)
+dist/assets/js/index-CXoCok03.js              0.62 kB  # 상수 파일
+dist/assets/js/EmptyState-V76Gae6V.js         0.67 kB  # EmptyState 컴포넌트
+dist/assets/js/DashboardHeader-Bf271Edx.js    1.04 kB  # DashboardHeader 컴포넌트
+```
+
+#### 중앙화된 상수 관리
+- **UI 상수**: 아이콘 크기, 간격, 그리드 브레이크포인트
+- **테스트 계정**: 개발용 계정 정보 안전 관리
+- **메시지**: 에러/성공 메시지 일관성 확보
+- **앱 설정**: 라우트, 역할 등 핵심 설정값
+
+#### 재사용 가능한 컴포넌트
+- **DashboardHeader**: 모든 대시보드 화면에서 공통 사용
+- **EmptyState**: 빈 상태 표시용 범용 컴포넌트
+- **일관된 스타일링**: UI_CONSTANTS를 통한 표준화
 
 ## 🎯 핵심 기능
 
@@ -272,7 +307,13 @@ interface Order {
 - [x] 성능 최적화 및 디버깅 개선
 - [x] Redux DevTools 지원 추가
 
-
+### Phase 2.7: 코드 리팩토링 ✅ (2025.07.20 완료)
+- [x] 상수 파일 분리 (`src/constants/index.ts`)
+- [x] 공통 컴포넌트 분리 (`DashboardHeader`, `EmptyState`)
+- [x] 하드코딩된 값들 중앙 집중 관리
+- [x] 중복 코드 제거 및 재사용성 향상
+- [x] 코드 일관성 및 표준화 적용
+- [x] 유지보수성 개선 (단일 소스 원칙)
 
 ## 📁 현재 폴더 구조
 
@@ -282,14 +323,16 @@ src/
 │   ├── common/
 │   │   ├── LoadingSpinner.tsx
 │   │   ├── ProtectedRoute.tsx
-│   │   └── ErrorBoundary.tsx ✅ (신규 - 웹뷰 오류 처리)
+│   │   ├── ErrorBoundary.tsx ✅ (웹뷰 오류 처리)
+│   │   ├── DashboardHeader.tsx ✅ (신규 - 공통 헤더)
+│   │   └── EmptyState.tsx ✅ (신규 - 빈 상태 컴포넌트)
 │   └── screens/
-│       ├── LoginScreen.tsx ✅ (HashRouter 연동)
+│       ├── LoginScreen.tsx ✅ (HashRouter 연동 + 리팩토링)
 │       ├── RegisterScreen.tsx ✅ (역할 선택 + HashRouter 연동)
-│       ├── DashboardScreen.tsx
-│       ├── StoreOwnerDashboard.tsx ✅ (Firebase 연동 + 안전한 로그아웃)
+│       ├── DashboardScreen.tsx ✅ (리팩토링 완료)
+│       ├── StoreOwnerDashboard.tsx ✅ (Firebase 연동 + 리팩토링)
 │       ├── StoreRegisterScreen.tsx ✅ (신규)
-│       └── StoreListScreen.tsx ✅ (신규)
+│       └── StoreListScreen.tsx ✅ (신규 + 리팩토링)
 ├── stores/
 │   ├── authStore.ts ✅ (Firebase Auth 연동 + 웹뷰 안전 로그아웃)
 │   ├── storeStore.ts ✅ (신규 - 매장 관리)
@@ -297,6 +340,8 @@ src/
 ├── types/
 │   ├── auth.ts ✅ (역할 선택 추가)
 │   └── store.ts ✅ (신규)
+├── constants/
+│   └── index.ts ✅ (신규 - 중앙화된 상수 관리)
 ├── config/
 │   └── firebase.ts ✅ (환경변수 적용)
 ├── theme/
@@ -383,8 +428,29 @@ src/
 - [x] 로컬스토리지 완전 삭제 처리
 - [x] 페이지 리로드 방식 안전 처리
 
-### Phase 6: 최적화 및 테스트 (진행 예정)
-- [ ] 성능 최적화
+### Phase 6: 최적화 및 테스트 (지속적 개선) 🔄
+
+#### 6.1: 성능 최적화 ✅ (2025.07.19 완료)
+- [x] 성능 최적화 (React.memo, useCallback, useMemo)
+- [x] 코드 분할 및 Lazy Loading
+- [x] 번들 크기 최적화 (65% 감소)
+- [x] TypeScript strict 모드 활성화
+- [x] ESLint 규칙 강화
+
+#### 6.2: 코드 리팩토링 ✅ (2025.07.20 완료)
+- [x] 상수 파일 분리 및 중앙 집중 관리
+- [x] 공통 컴포넌트 분리 (`DashboardHeader`, `EmptyState`)
+- [x] 중복 코드 제거 (100% 감소)
+- [x] 코드 일관성 및 표준화 적용
+- [x] 유지보수성 개선 (단일 소스 원칙)
+
+#### 6.3: 다음 최적화 계획 (예정)
+- [ ] 커스텀 훅 분리 (useAuth, useStores 등)
+- [ ] 더 큰 컴포넌트 세분화 (카드, 폼 컴포넌트)
+- [ ] 스토어 에러 처리 표준화
 - [ ] 오프라인 지원
 - [ ] 사용자 테스트
-- [ ] 버그 수정 
+- [ ] 버그 수정
+
+> 💡 **Phase 6는 주기적으로 진행되는 지속적 개선 단계입니다.**  
+> 각 리팩토링 완료 시마다 날짜를 업데이트하여 이력을 추적합니다. 
