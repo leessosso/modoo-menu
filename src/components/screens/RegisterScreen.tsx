@@ -10,9 +10,10 @@ import {
     CircularProgress,
     Link,
 } from '@mui/material';
-import { Email, Lock, Person, Phone, Visibility, VisibilityOff } from '@mui/icons-material';
+import { Email, Lock, Person, Phone, Visibility, VisibilityOff, Business, Person as PersonIcon } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import type { RegisterCredentials } from '../../types/auth';
+import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 
 const RegisterScreen: React.FC = () => {
     const { register, isLoading, error, clearError } = useAuthStore();
@@ -22,12 +23,14 @@ const RegisterScreen: React.FC = () => {
         confirmPassword: '',
         name: '',
         phone: '',
+        role: 'customer',
     });
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('회원가입 폼 제출:', credentials);
         clearError();
         await register(credentials);
     };
@@ -132,6 +135,36 @@ const RegisterScreen: React.FC = () => {
                             ),
                         }}
                     />
+
+                    <FormControl component="fieldset" sx={{ mt: 2, width: '100%' }}>
+                        <FormLabel component="legend">계정 유형</FormLabel>
+                        <RadioGroup
+                            row
+                            value={credentials.role}
+                            onChange={(e) => setCredentials(prev => ({ ...prev, role: e.target.value as 'customer' | 'store_owner' }))}
+                        >
+                            <FormControlLabel
+                                value="customer"
+                                control={<Radio />}
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
+                                        고객
+                                    </Box>
+                                }
+                            />
+                            <FormControlLabel
+                                value="store_owner"
+                                control={<Radio />}
+                                label={
+                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                                        <Business sx={{ mr: 1, fontSize: 20 }} />
+                                        매장관리자
+                                    </Box>
+                                }
+                            />
+                        </RadioGroup>
+                    </FormControl>
 
                     <Button
                         type="submit"

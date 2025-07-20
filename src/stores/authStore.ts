@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { User, LoginCredentials, RegisterCredentials } from '../types/auth';
+import {
+    signInWithEmailAndPassword,
+    createUserWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    type User as FirebaseUser
+} from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 
 interface AuthState {
     // 상태
@@ -15,9 +24,10 @@ interface AuthActions {
     // 액션
     login: (credentials: LoginCredentials) => Promise<void>;
     register: (credentials: RegisterCredentials) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     clearError: () => void;
     setLoading: (loading: boolean) => void;
+    initializeAuth: () => (() => void) | undefined;
 }
 
 interface AuthSelectors {
@@ -29,6 +39,61 @@ interface AuthSelectors {
 }
 
 type AuthStore = AuthState & AuthActions & AuthSelectors;
+
+// Firebase User를 우리 앱의 User 타입으로 변환하는 함수
+const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
+    return {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '사용자',
+        role: 'customer', // 기본값, 나중에 Firestore에서 사용자 역할을 가져올 수 있음
+        createdAt: new Date(firebaseUser.metadata.creationTime || Date.now()),
+        lastLoginAt: new Date(),
+    };
+};
+
+// Firestore에 사용자 정보 저장
+const saveUserToFirestore = async (user: User) => {
+    try {
+        await setDoc(doc(db, 'users', user.id), {
+            email: user.email,
+            name: user.name,
+            phone: user.phone,
+            role: user.role,
+            stores: user.stores || [],
+            createdAt: user.createdAt,
+            lastLoginAt: user.lastLoginAt,
+        });
+        console.log('Firestore에 사용자 정보 저장 완료:', user.id);
+    } catch (error) {
+        console.error('Firestore 사용자 정보 저장 실패:', error);
+        throw error;
+    }
+};
+
+// Firestore에서 사용자 정보 가져오기
+const getUserFromFirestore = async (uid: string): Promise<User | null> => {
+    try {
+        const userDoc = await getDoc(doc(db, 'users', uid));
+        if (userDoc.exists()) {
+            const data = userDoc.data();
+            return {
+                id: uid,
+                email: data.email,
+                name: data.name,
+                phone: data.phone,
+                role: data.role,
+                stores: data.stores || [],
+                createdAt: data.createdAt?.toDate() || new Date(),
+                lastLoginAt: data.lastLoginAt?.toDate() || new Date(),
+            };
+        }
+        return null;
+    } catch (error) {
+        console.error('Firestore에서 사용자 정보 가져오기 실패:', error);
+        return null;
+    }
+};
 
 export const useAuthStore = create<AuthStore>()(
     devtools(
@@ -46,53 +111,43 @@ export const useAuthStore = create<AuthStore>()(
                     set({ isLoading: true, error: null });
 
                     try {
-                        // 실제로는 API 호출이 여기에 들어갑니다
-                        // 지금은 시뮬레이션
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        const userCredential = await signInWithEmailAndPassword(
+                            auth,
+                            credentials.email,
+                            credentials.password
+                        );
 
-                        // 테스트 계정들
-                        if (credentials.email === 'test@example.com' && credentials.password === 'password') {
-                            const user: User = {
-                                id: '1',
-                                email: credentials.email,
-                                name: '테스트 사용자',
-                                role: 'customer',
-                                createdAt: new Date(),
-                                lastLoginAt: new Date(),
-                            };
+                        const user = convertFirebaseUser(userCredential.user);
 
-                            set({
-                                user,
-                                isAuthenticated: true,
-                                isLoading: false,
-                                error: null,
-                            });
-                        } else if (credentials.email === 'store@example.com' && credentials.password === 'password') {
-                            const user: User = {
-                                id: '2',
-                                email: credentials.email,
-                                name: '매장관리자',
-                                role: 'store_owner',
-                                stores: ['1', '2'],
-                                createdAt: new Date(),
-                                lastLoginAt: new Date(),
-                            };
+                        set({
+                            user,
+                            isAuthenticated: true,
+                            isLoading: false,
+                            error: null,
+                        });
+                    } catch (error: any) {
+                        let errorMessage = '로그인에 실패했습니다.';
 
-                            set({
-                                user,
-                                isAuthenticated: true,
-                                isLoading: false,
-                                error: null,
-                            });
-                        } else {
-                            throw new Error('이메일 또는 비밀번호가 올바르지 않습니다.');
+                        switch (error.code) {
+                            case 'auth/user-not-found':
+                                errorMessage = '등록되지 않은 이메일입니다.';
+                                break;
+                            case 'auth/wrong-password':
+                                errorMessage = '비밀번호가 올바르지 않습니다.';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage = '올바르지 않은 이메일 형식입니다.';
+                                break;
+                            case 'auth/too-many-requests':
+                                errorMessage = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
+                                break;
                         }
-                    } catch (error) {
+
                         set({
                             user: null,
                             isAuthenticated: false,
                             isLoading: false,
-                            error: error instanceof Error ? error.message : '로그인에 실패했습니다.',
+                            error: errorMessage,
                         });
                     }
                 },
@@ -101,23 +156,42 @@ export const useAuthStore = create<AuthStore>()(
                     set({ isLoading: true, error: null });
 
                     try {
-                        // 실제로는 API 호출이 여기에 들어갑니다
-                        // 지금은 시뮬레이션
-                        await new Promise(resolve => setTimeout(resolve, 1000));
+                        console.log('회원가입 시작:', credentials.email);
 
                         if (credentials.password !== credentials.confirmPassword) {
                             throw new Error('비밀번호가 일치하지 않습니다.');
                         }
 
-                        const user: User = {
-                            id: Date.now().toString(),
-                            email: credentials.email,
-                            name: credentials.name,
-                            phone: credentials.phone,
-                            role: credentials.role || 'customer',
-                            createdAt: new Date(),
-                            lastLoginAt: new Date(),
-                        };
+                        const userCredential = await createUserWithEmailAndPassword(
+                            auth,
+                            credentials.email,
+                            credentials.password
+                        );
+
+                        console.log('Firebase 사용자 생성 성공:', userCredential.user.uid);
+
+                        // 사용자 프로필 업데이트 (이름 설정) - 선택적
+                        try {
+                            if (userCredential.user) {
+                                await (userCredential.user as any).updateProfile({
+                                    displayName: credentials.name
+                                });
+                                console.log('프로필 업데이트 성공');
+                            }
+                        } catch (profileError) {
+                            console.warn('프로필 업데이트 실패 (무시됨):', profileError);
+                            // 프로필 업데이트 실패는 회원가입 실패로 처리하지 않음
+                        }
+
+                        const user = convertFirebaseUser(userCredential.user);
+                        user.name = credentials.name;
+                        user.phone = credentials.phone;
+                        user.role = credentials.role || 'customer';
+
+                        console.log('사용자 정보 설정:', user);
+
+                        // Firestore에 사용자 정보 저장
+                        await saveUserToFirestore(user);
 
                         set({
                             user,
@@ -125,23 +199,46 @@ export const useAuthStore = create<AuthStore>()(
                             isLoading: false,
                             error: null,
                         });
-                    } catch (error) {
+
+                        console.log('회원가입 완료 - 상태 업데이트됨');
+                    } catch (error: any) {
+                        console.error('회원가입 오류:', error);
+
+                        let errorMessage = '회원가입에 실패했습니다.';
+
+                        switch (error.code) {
+                            case 'auth/email-already-in-use':
+                                errorMessage = '이미 사용 중인 이메일입니다.';
+                                break;
+                            case 'auth/weak-password':
+                                errorMessage = '비밀번호가 너무 약합니다. (최소 6자)';
+                                break;
+                            case 'auth/invalid-email':
+                                errorMessage = '올바르지 않은 이메일 형식입니다.';
+                                break;
+                        }
+
                         set({
                             user: null,
                             isAuthenticated: false,
                             isLoading: false,
-                            error: error instanceof Error ? error.message : '회원가입에 실패했습니다.',
+                            error: errorMessage,
                         });
                     }
                 },
 
-                logout: () => {
-                    set({
-                        user: null,
-                        isAuthenticated: false,
-                        isLoading: false,
-                        error: null,
-                    });
+                logout: async () => {
+                    try {
+                        await signOut(auth);
+                        set({
+                            user: null,
+                            isAuthenticated: false,
+                            isLoading: false,
+                            error: null,
+                        });
+                    } catch (error) {
+                        console.error('로그아웃 오류:', error);
+                    }
                 },
 
                 clearError: () => {
@@ -150,6 +247,35 @@ export const useAuthStore = create<AuthStore>()(
 
                 setLoading: (loading: boolean) => {
                     set({ isLoading: loading });
+                },
+
+                initializeAuth: () => {
+                    return onAuthStateChanged(auth, async (firebaseUser) => {
+                        if (firebaseUser) {
+                            // Firestore에서 사용자 정보 가져오기 시도
+                            let user = await getUserFromFirestore(firebaseUser.uid);
+
+                            // Firestore에 정보가 없으면 기본 정보 사용
+                            if (!user) {
+                                user = convertFirebaseUser(firebaseUser);
+                                console.log('Firestore에 사용자 정보 없음, 기본 정보 사용:', user);
+                            } else {
+                                console.log('Firestore에서 사용자 정보 가져옴:', user);
+                            }
+
+                            set({
+                                user,
+                                isAuthenticated: true,
+                                isLoading: false,
+                            });
+                        } else {
+                            set({
+                                user: null,
+                                isAuthenticated: false,
+                                isLoading: false,
+                            });
+                        }
+                    });
                 },
 
                 // 선택자

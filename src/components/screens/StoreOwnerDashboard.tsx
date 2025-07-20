@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
     Box,
     Container,
@@ -20,33 +20,31 @@ import {
     Logout,
     TrendingUp,
 } from '@mui/icons-material';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
+import { useStoreStore } from '../../stores/storeStore';
 
 const StoreOwnerDashboard: React.FC = () => {
+    const navigate = useNavigate();
     const { user, logout } = useAuthStore();
+    const { stores, fetchStores, isLoading } = useStoreStore();
 
-    // 임시 매장 데이터 (나중에 Firebase에서 가져올 예정)
-    const mockStores = [
-        {
-            id: '1',
-            name: '맛있는 카페',
-            description: '신선한 원두로 내린 커피',
-            isOpen: true,
-            orderCount: 15,
-            revenue: 125000,
-        },
-        {
-            id: '2',
-            name: '피자 전문점',
-            description: '정통 이탈리안 피자',
-            isOpen: false,
-            orderCount: 8,
-            revenue: 89000,
-        },
-    ];
+    useEffect(() => {
+        if (user) {
+            fetchStores(user.id);
+        }
+    }, [user, fetchStores]);
 
     const handleLogout = () => {
         logout();
+    };
+
+    const handleAddStore = () => {
+        navigate('/store-register');
+    };
+
+    const handleViewStores = () => {
+        navigate('/store-list');
     };
 
     const menuItems = [
@@ -140,62 +138,81 @@ const StoreOwnerDashboard: React.FC = () => {
                             variant="contained"
                             startIcon={<Add />}
                             size="small"
+                            onClick={handleAddStore}
                         >
                             새 매장 등록
                         </Button>
                     </Box>
 
-                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
-                        {mockStores.map((store) => (
-                            <Card key={store.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }}>
-                                <CardContent>
-                                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                                        <Box>
-                                            <Typography variant="h6" component="h4" gutterBottom>
-                                                {store.name}
-                                            </Typography>
-                                            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                                {store.description}
-                                            </Typography>
+                    {stores.length === 0 ? (
+                        <Box textAlign="center" py={4}>
+                            <Typography variant="h6" color="text.secondary" gutterBottom>
+                                등록된 매장이 없습니다
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                                첫 번째 매장을 등록해보세요
+                            </Typography>
+                            <Button
+                                variant="contained"
+                                startIcon={<Add />}
+                                onClick={handleAddStore}
+                            >
+                                매장 등록
+                            </Button>
+                        </Box>
+                    ) : (
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+                            {stores.slice(0, 2).map((store) => (
+                                <Card key={store.id} sx={{ cursor: 'pointer', '&:hover': { boxShadow: 3 } }}>
+                                    <CardContent>
+                                        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                                            <Box>
+                                                <Typography variant="h6" component="h4" gutterBottom>
+                                                    {store.name}
+                                                </Typography>
+                                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                                    {store.description}
+                                                </Typography>
+                                            </Box>
+                                            <Chip
+                                                label={store.isOpen ? '영업중' : '휴무'}
+                                                color={store.isOpen ? 'success' : 'default'}
+                                                size="small"
+                                            />
                                         </Box>
-                                        <Chip
-                                            label={store.isOpen ? '영업중' : '휴무'}
-                                            color={store.isOpen ? 'success' : 'default'}
-                                            size="small"
-                                        />
-                                    </Box>
 
-                                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                오늘 주문
-                                            </Typography>
-                                            <Typography variant="h6" color="primary">
-                                                {store.orderCount}건
-                                            </Typography>
+                                        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                                            <Box>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    카테고리
+                                                </Typography>
+                                                <Typography variant="h6" color="primary">
+                                                    {store.categories.length}개
+                                                </Typography>
+                                            </Box>
+                                            <Box>
+                                                <Typography variant="caption" color="text.secondary">
+                                                    전화번호
+                                                </Typography>
+                                                <Typography variant="h6" color="success.main">
+                                                    {store.phone}
+                                                </Typography>
+                                            </Box>
                                         </Box>
-                                        <Box>
-                                            <Typography variant="caption" color="text.secondary">
-                                                오늘 매출
-                                            </Typography>
-                                            <Typography variant="h6" color="success.main">
-                                                {store.revenue.toLocaleString()}원
-                                            </Typography>
-                                        </Box>
-                                    </Box>
 
-                                    <Box sx={{ display: 'flex', gap: 1 }}>
-                                        <Button size="small" startIcon={<Edit />}>
-                                            수정
-                                        </Button>
-                                        <Button size="small" startIcon={<MenuBook />}>
-                                            메뉴 관리
-                                        </Button>
-                                    </Box>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </Box>
+                                        <Box sx={{ display: 'flex', gap: 1 }}>
+                                            <Button size="small" startIcon={<Edit />}>
+                                                수정
+                                            </Button>
+                                            <Button size="small" startIcon={<MenuBook />}>
+                                                메뉴 관리
+                                            </Button>
+                                        </Box>
+                                    </CardContent>
+                                </Card>
+                            ))}
+                        </Box>
+                    )}
                 </Paper>
 
                 {/* 빠른 액션 */}

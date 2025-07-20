@@ -120,19 +120,21 @@ interface User {
 }
 ```
 
-### 매장 정보
+### 매장 정보 ✅
 ```typescript
 interface Store {
   id: string;
   name: string;
   description: string;
-  logo: string;
+  logo?: string;
   address: string;
   phone: string;
   businessHours: string;
   categories: Category[];
   isOpen: boolean;
   ownerId: string; // 매장관리자 ID
+  createdAt: Date;
+  updatedAt: Date;
 }
 ```
 
@@ -214,15 +216,21 @@ src/
 │       ├── LoginScreen.tsx
 │       ├── RegisterScreen.tsx
 │       ├── DashboardScreen.tsx
-│       └── StoreOwnerDashboard.tsx
+│       ├── StoreOwnerDashboard.tsx ✅ (Firebase 연동)
+│       ├── StoreRegisterScreen.tsx ✅ (신규)
+│       └── StoreListScreen.tsx ✅ (신규)
 ├── stores/
-│   ├── authStore.ts ✅ (Zustand)
+│   ├── authStore.ts ✅ (Firebase Auth 연동)
+│   ├── storeStore.ts ✅ (신규 - 매장 관리)
 │   └── index.ts
 ├── types/
-│   └── auth.ts
+│   ├── auth.ts
+│   └── store.ts ✅ (신규)
+├── config/
+│   └── firebase.ts ✅ (신규)
 ├── theme/
 │   └── index.ts
-├── App.tsx
+├── App.tsx ✅ (라우팅 업데이트)
 ├── main.tsx
 └── index.css
 ```
@@ -245,25 +253,43 @@ src/
 | **디버깅** | 어려움 | 쉬움 | 개선 |
 | **학습 곡선** | 높음 | 낮음 | 개선 |
 
-### 🚀 Firebase 연동 준비 완료
-- Zustand의 간단한 API로 Firebase 연동이 더 쉬워짐
-- 실시간 상태 동기화 구현 용이
-- 오프라인 지원 구현 간소화
+### 🚀 Firebase 연동 완료 ✅
+- Firebase Auth로 사용자 인증 구현
+- Firestore로 사용자/매장 정보 저장
+- 실시간 상태 동기화 구현
+- 매장 관리 기능 완전 연동
 
 ## 🎯 다음 개발 단계
 
-### Phase 3: 매장 관리 기능 (진행 예정)
-- [ ] 매장 등록 화면
-- [ ] 매장 수정 화면
-- [ ] 메뉴 관리 화면
-- [ ] 카테고리 관리
+### Phase 3: 매장 관리 기능 ✅ (완료)
+- [x] 매장 등록 화면
+- [x] 매장 목록 화면
+- [x] 매장 수정/삭제 기능
+- [x] Firestore 데이터 모델 설계
+- [x] 매장 관리 Store (Zustand)
+- [ ] 메뉴 관리 화면 (진행 예정)
+- [ ] 카테고리 관리 (진행 예정)
 
-### Phase 4: Firebase 연동 (진행 예정)
-- [ ] Firebase 프로젝트 설정
-- [ ] Firebase Authentication 연동
-- [ ] Firestore Database 연동
-- [ ] Firebase Storage (이미지) 연동
-- [ ] 실시간 데이터 동기화
+### Phase 4: Firebase 연동 ✅ (완료)
+- [x] Firebase 프로젝트 설정
+- [x] Firebase Authentication 연동
+- [x] Firestore Database 연동
+- [x] 사용자 정보 Firestore 저장
+- [x] 매장 정보 Firestore 저장
+- [x] 실시간 데이터 동기화
+- [ ] Firebase Storage (이미지) 연동 (진행 예정)
+
+### Phase 3.5: 메뉴 관리 기능 (진행 예정)
+- [ ] 카테고리 관리 화면
+- [ ] 메뉴 아이템 관리 화면
+- [ ] 메뉴 옵션 관리
+- [ ] 메뉴 순서 관리
+
+### Phase 4.5: 주문 관리 기능 (진행 예정)
+- [ ] 실시간 주문 목록
+- [ ] 주문 상태 관리
+- [ ] 주문 상세 정보
+- [ ] 주문 통계
 
 ### Phase 5: 고객 기능 (진행 예정)
 - [ ] 매장 선택 화면

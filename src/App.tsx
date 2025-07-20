@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
@@ -8,12 +8,24 @@ import LoginScreen from './components/screens/LoginScreen';
 import RegisterScreen from './components/screens/RegisterScreen';
 import DashboardScreen from './components/screens/DashboardScreen';
 import StoreOwnerDashboard from './components/screens/StoreOwnerDashboard';
+import StoreRegisterScreen from './components/screens/StoreRegisterScreen';
+import StoreListScreen from './components/screens/StoreListScreen';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
 
 // 메인 앱 컴포넌트
 const AppContent: React.FC = () => {
-  const { isAuthenticated, isLoading, user, isHydrated } = useAuthStore();
+  const { isAuthenticated, isLoading, user, isHydrated, initializeAuth } = useAuthStore();
+
+  // Firebase 인증 초기화
+  useEffect(() => {
+    const unsubscribe = initializeAuth();
+    return () => {
+      if (typeof unsubscribe === 'function') {
+        unsubscribe();
+      }
+    };
+  }, [initializeAuth]);
 
   // persist 미들웨어가 초기화되지 않았거나 로딩 중이면 로딩 스피너 표시
   if (!isHydrated || isLoading) {
@@ -56,6 +68,18 @@ const AppContent: React.FC = () => {
         <Route path="/store-dashboard" element={
           <ProtectedRoute>
             <StoreOwnerDashboard />
+          </ProtectedRoute>
+        } />
+
+        {/* 매장 관리 화면들 */}
+        <Route path="/store-register" element={
+          <ProtectedRoute>
+            <StoreRegisterScreen />
+          </ProtectedRoute>
+        } />
+        <Route path="/store-list" element={
+          <ProtectedRoute>
+            <StoreListScreen />
           </ProtectedRoute>
         } />
 
