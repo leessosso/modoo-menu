@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom';
 import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import type { LoginCredentials } from '../../types/auth';
+import { UI_CONSTANTS, TEST_ACCOUNTS, APP_CONFIG } from '../../constants';
 
 const LoginScreen: React.FC = memo(() => {
   const { login, isLoading, error, clearError } = useAuthStore();
@@ -29,7 +30,7 @@ const LoginScreen: React.FC = memo(() => {
   }, [credentials, login, clearError]);
 
   const handleChange = useCallback((field: keyof LoginCredentials) => (
-    e: React.ChangeEvent<HTMLInputElement>,
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setCredentials(prev => ({
       ...prev,
@@ -41,23 +42,31 @@ const LoginScreen: React.FC = memo(() => {
     setShowPassword(prev => !prev);
   }, []);
 
+  const handleTestAccountLogin = useCallback((accountType: 'CUSTOMER' | 'STORE_OWNER') => {
+    const account = TEST_ACCOUNTS[accountType];
+    setCredentials({
+      email: account.email,
+      password: account.password,
+    });
+  }, []);
+
   return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Paper sx={{ p: 4, textAlign: 'center' }}>
+    <Container maxWidth="sm" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
+      <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom color="primary">
-                    로그인
+          로그인
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                    모두의 메뉴에 오신 것을 환영합니다
+        <Typography variant="body1" color="text.secondary" sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+          {APP_CONFIG.NAME}에 오신 것을 환영합니다
         </Typography>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: UI_CONSTANTS.SPACING.MD }}>
             {error}
           </Alert>
         )}
 
-        <Box component="form" onSubmit={handleSubmit} sx={{ mt: 2 }}>
+        <Box component="form" onSubmit={handleSubmit} sx={{ mt: UI_CONSTANTS.SPACING.SM }}>
           <TextField
             fullWidth
             label="이메일"
@@ -97,45 +106,39 @@ const LoginScreen: React.FC = memo(() => {
             variant="contained"
             size="large"
             disabled={isLoading}
-            sx={{ mt: 3, mb: 2 }}
+            sx={{ mt: UI_CONSTANTS.SPACING.MD, mb: UI_CONSTANTS.SPACING.SM }}
           >
             {isLoading ? <CircularProgress size={24} /> : '로그인'}
           </Button>
 
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ mt: UI_CONSTANTS.SPACING.SM }}>
             <Typography variant="body2" color="text.secondary">
-                            계정이 없으신가요?{' '}
-              <Link to="/register" style={{ textDecoration: 'underline' }}>
-                                회원가입
+              계정이 없으신가요?{' '}
+              <Link to={APP_CONFIG.ROUTES.REGISTER} style={{ textDecoration: 'underline' }}>
+                회원가입
               </Link>
             </Typography>
           </Box>
 
           {/* 테스트 계정 */}
-          <Box sx={{ mt: 4, p: 3, bgcolor: 'grey.50', borderRadius: 2 }}>
+          <Box sx={{ mt: UI_CONSTANTS.SPACING.LG, p: UI_CONSTANTS.SPACING.MD, bgcolor: 'grey.50', borderRadius: 2 }}>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-                            💡 테스트 계정으로 빠르게 시작해보세요
+              💡 테스트 계정으로 빠르게 시작해보세요
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap', justifyContent: 'center' }}>
+            <Box sx={{ display: 'flex', gap: UI_CONSTANTS.SPACING.SM, flexWrap: 'wrap', justifyContent: 'center' }}>
               <Button
                 variant="outlined"
                 size="small"
-                onClick={() => { setCredentials({
-                  email: 'customer@test.com',
-                  password: 'test123456',
-                }); }}
+                onClick={() => handleTestAccountLogin('CUSTOMER')}
               >
-                                고객 계정
+                {TEST_ACCOUNTS.CUSTOMER.label}
               </Button>
               <Button
                 variant="outlined"
                 size="small"
-                onClick={() => { setCredentials({
-                  email: 'owner@test.com',
-                  password: 'test123456',
-                }); }}
+                onClick={() => handleTestAccountLogin('STORE_OWNER')}
               >
-                                매장관리자 계정
+                {TEST_ACCOUNTS.STORE_OWNER.label}
               </Button>
             </Box>
           </Box>

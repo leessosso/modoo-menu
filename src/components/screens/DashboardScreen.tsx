@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, memo } from 'react';
+import React, { useMemo, memo } from 'react';
 import {
   Box,
   Container,
@@ -7,50 +7,45 @@ import {
   Button,
   Card,
   CardContent,
-  Avatar,
   Divider,
 } from '@mui/material';
 import {
   Restaurant,
   QrCode,
-  Person,
-  Logout,
   History,
   Favorite,
 } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
+import DashboardHeader from '../common/DashboardHeader';
+import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
 
 const DashboardScreen: React.FC = memo(() => {
-  const { user, logout } = useAuthStore();
-
-  const handleLogout = useCallback(() => {
-    logout();
-  }, [logout]);
+  const { user } = useAuthStore();
 
   // 메뉴 아이템들을 useMemo로 최적화
   const menuItems = useMemo(() => [
     {
       title: 'QR코드 스캔',
       description: '매장의 QR코드를 스캔하여 바로 주문하세요',
-      icon: <QrCode sx={{ fontSize: 40, color: 'primary.main' }} />,
+      icon: <QrCode sx={{ fontSize: UI_CONSTANTS.ICON_SIZES.LARGE, color: 'primary.main' }} />,
       color: 'primary.main',
     },
     {
       title: '매장 선택',
       description: '원하는 매장을 선택하여 메뉴를 확인하세요',
-      icon: <Restaurant sx={{ fontSize: 40, color: 'primary.main' }} />,
+      icon: <Restaurant sx={{ fontSize: UI_CONSTANTS.ICON_SIZES.LARGE, color: 'primary.main' }} />,
       color: 'primary.main',
     },
     {
       title: '주문 내역',
       description: '이전 주문 내역을 확인하세요',
-      icon: <History sx={{ fontSize: 40, color: 'secondary.main' }} />,
+      icon: <History sx={{ fontSize: UI_CONSTANTS.ICON_SIZES.LARGE, color: 'secondary.main' }} />,
       color: 'secondary.main',
     },
     {
       title: '즐겨찾기',
       description: '자주 방문하는 매장을 즐겨찾기에 추가하세요',
-      icon: <Favorite sx={{ fontSize: 40, color: 'error.main' }} />,
+      icon: <Favorite sx={{ fontSize: UI_CONSTANTS.ICON_SIZES.LARGE, color: 'error.main' }} />,
       color: 'error.main',
     },
   ], []);
@@ -63,55 +58,25 @@ const DashboardScreen: React.FC = memo(() => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* 헤더 */}
-      <Box
-        sx={{
-          bgcolor: 'primary.main',
-          color: 'white',
-          py: 3,
-        }}
-      >
-        <Container maxWidth="md">
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <Typography variant="h4" component="h1">
-                            🍽️ 모두의 메뉴
-            </Typography>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  <Person />
-                </Avatar>
-                <Typography variant="body2">
-                  {user?.name}
-                </Typography>
-              </Box>
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={handleLogout}
-                startIcon={<Logout />}
-                sx={{ color: 'white', borderColor: 'white' }}
-              >
-                                로그아웃
-              </Button>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
+      <DashboardHeader
+        title={`🍽️ ${APP_CONFIG.NAME}`}
+        maxWidth="md"
+      />
 
       {/* 메인 콘텐츠 */}
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="md" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
         {/* 환영 메시지 */}
-        <Paper sx={{ p: 4, mb: 4, textAlign: 'center' }}>
+        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG, textAlign: 'center' }}>
           <Typography variant="h5" component="h2" gutterBottom color="primary">
-                        안녕하세요, {user?.name}님! 👋
+            안녕하세요, {user?.name}님! 👋
           </Typography>
           <Typography variant="body1" color="text.secondary">
-                        오늘은 어떤 매장에서 주문하실 건가요?
+            오늘은 어떤 매장에서 주문하실 건가요?
           </Typography>
         </Paper>
 
         {/* 메뉴 그리드 */}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 3 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.TABLET, gap: UI_CONSTANTS.SPACING.MD }}>
           {menuItems.map((item, index) => (
             <Card
               key={index}
@@ -125,8 +90,8 @@ const DashboardScreen: React.FC = memo(() => {
                 },
               }}
             >
-              <CardContent sx={{ textAlign: 'center', p: 3 }}>
-                <Box sx={{ mb: 2 }}>
+              <CardContent sx={{ textAlign: 'center', p: UI_CONSTANTS.SPACING.MD }}>
+                <Box sx={{ mb: UI_CONSTANTS.SPACING.SM }}>
                   {item.icon}
                 </Box>
                 <Typography variant="h6" component="h3" gutterBottom>
@@ -141,19 +106,19 @@ const DashboardScreen: React.FC = memo(() => {
         </Box>
 
         {/* 빠른 액션 */}
-        <Paper sx={{ p: 4, mt: 4 }}>
+        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mt: UI_CONSTANTS.SPACING.LG }}>
           <Typography variant="h6" gutterBottom>
-                        빠른 주문
+            빠른 주문
           </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
+          <Box sx={{ display: 'flex', gap: UI_CONSTANTS.SPACING.SM, flexWrap: 'wrap' }}>
             <Button
               variant="contained"
               size="large"
               startIcon={<QrCode />}
               sx={{ flex: 1, minWidth: 200 }}
             >
-                            QR코드 스캔
+              QR코드 스캔
             </Button>
             <Button
               variant="outlined"
@@ -161,21 +126,21 @@ const DashboardScreen: React.FC = memo(() => {
               startIcon={<Restaurant />}
               sx={{ flex: 1, minWidth: 200 }}
             >
-                            매장 선택
+              매장 선택
             </Button>
           </Box>
         </Paper>
 
         {/* 사용자 정보 */}
-        <Paper sx={{ p: 4, mt: 4 }}>
+        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mt: UI_CONSTANTS.SPACING.LG }}>
           <Typography variant="h6" gutterBottom>
-                        내 정보
+            내 정보
           </Typography>
-          <Divider sx={{ mb: 3 }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' }, gap: 2 }}>
+          <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
+          <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.TABLET, gap: UI_CONSTANTS.SPACING.SM }}>
             <Box>
               <Typography variant="body2" color="text.secondary">
-                                이름
+                이름
               </Typography>
               <Typography variant="body1">
                 {user?.name}
@@ -183,7 +148,7 @@ const DashboardScreen: React.FC = memo(() => {
             </Box>
             <Box>
               <Typography variant="body2" color="text.secondary">
-                                이메일
+                이메일
               </Typography>
               <Typography variant="body1">
                 {user?.email}
@@ -192,7 +157,7 @@ const DashboardScreen: React.FC = memo(() => {
             {user?.phone && (
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                                    전화번호
+                  전화번호
                 </Typography>
                 <Typography variant="body1">
                   {user.phone}
@@ -201,7 +166,7 @@ const DashboardScreen: React.FC = memo(() => {
             )}
             <Box>
               <Typography variant="body2" color="text.secondary">
-                                가입일
+                가입일
               </Typography>
               <Typography variant="body1">
                 {userCreatedDate}
