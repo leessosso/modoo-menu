@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback, useMemo, memo } from 'react';
+import React, { useEffect, useCallback, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -23,8 +23,9 @@ import { useStoreStore } from '../../stores/storeStore';
 import DashboardHeader from '../common/DashboardHeader';
 import EmptyState from '../common/EmptyState';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
+import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 
-const StoreOwnerDashboard: React.FC = memo(() => {
+const StoreOwnerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
   const { stores, fetchStores } = useStoreStore();
@@ -33,6 +34,11 @@ const StoreOwnerDashboard: React.FC = memo(() => {
     if (user) {
       fetchStores(user.id);
     }
+
+    // 대시보드 렌더링 최적화
+    optimizeWebViewTransition(() => {
+      console.log('매장 대시보드 렌더링 최적화 완료');
+    });
   }, [user, fetchStores]);
 
   const handleLogout = useCallback(async () => {
@@ -62,11 +68,15 @@ const StoreOwnerDashboard: React.FC = memo(() => {
   }, [logout]);
 
   const handleAddStore = useCallback(() => {
-    navigate(APP_CONFIG.ROUTES.STORE_REGISTER);
+    optimizeWebViewTransition(() => {
+      navigate(APP_CONFIG.ROUTES.STORE_REGISTER);
+    });
   }, [navigate]);
 
   const handleStoresList = useCallback(() => {
-    navigate(APP_CONFIG.ROUTES.STORE_LIST);
+    optimizeWebViewTransition(() => {
+      navigate(APP_CONFIG.ROUTES.STORE_LIST);
+    });
   }, [navigate]);
 
   // 메뉴 아이템들을 useMemo로 최적화
@@ -283,6 +293,6 @@ const StoreOwnerDashboard: React.FC = memo(() => {
       </Container>
     </Box>
   );
-});
+};
 
 export default StoreOwnerDashboard; 

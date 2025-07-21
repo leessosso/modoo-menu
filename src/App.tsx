@@ -54,7 +54,28 @@ const AppContent: React.FC = () => {
 
   return (
     <Router>
-      <Suspense fallback={<LoadingSpinner message="페이지를 불러오는 중..." />}>
+      <Suspense fallback={
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '100vh',
+          backgroundColor: '#f5f5f5'
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '40px',
+              height: '40px',
+              border: '4px solid #1976d2',
+              borderTop: '4px solid transparent',
+              borderRadius: '50%',
+              animation: 'spin 1s linear infinite',
+              margin: '0 auto 16px'
+            }} />
+            <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>화면 전환 중...</p>
+          </div>
+        </div>
+      }>
         <Routes>
           {/* 공개 라우트 */}
           <Route path="/login" element={

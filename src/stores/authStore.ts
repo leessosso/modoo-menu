@@ -12,30 +12,30 @@ import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
 
 interface AuthState {
-    // 상태
-    user: User | null;
-    isAuthenticated: boolean;
-    isLoading: boolean;
-    error: string | null;
-    isHydrated: boolean; // persist 미들웨어 초기화 완료 여부
+  // 상태
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+  isHydrated: boolean; // persist 미들웨어 초기화 완료 여부
 }
 
 interface AuthActions {
-    // 액션
-    login: (credentials: LoginCredentials) => Promise<void>;
-    register: (credentials: RegisterCredentials) => Promise<void>;
-    logout: () => Promise<void>;
-    clearError: () => void;
-    setLoading: (loading: boolean) => void;
-    initializeAuth: () => (() => void) | undefined;
+  // 액션
+  login: (credentials: LoginCredentials) => Promise<void>;
+  register: (credentials: RegisterCredentials) => Promise<void>;
+  logout: () => Promise<void>;
+  clearError: () => void;
+  setLoading: (loading: boolean) => void;
+  initializeAuth: () => (() => void) | undefined;
 }
 
 interface AuthSelectors {
-    // 선택자
-    isStoreOwner: () => boolean;
-    isCustomer: () => boolean;
-    isAdmin: () => boolean;
-    getUserStores: () => string[];
+  // 선택자
+  isStoreOwner: () => boolean;
+  isCustomer: () => boolean;
+  isAdmin: () => boolean;
+  getUserStores: () => string[];
 }
 
 type AuthStore = AuthState & AuthActions & AuthSelectors;
@@ -119,11 +119,14 @@ export const useAuthStore = create<AuthStore>()(
 
             const user = convertFirebaseUser(userCredential.user);
 
-            set({
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
+            // 상태 업데이트를 즉시 실행하여 화면 전환 지연 방지
+            requestAnimationFrame(() => {
+              set({
+                user,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null,
+              });
             });
           } catch (error: any) {
             let errorMessage = '로그인에 실패했습니다.';
@@ -195,11 +198,14 @@ export const useAuthStore = create<AuthStore>()(
             // Firestore에 사용자 정보 저장
             await saveUserToFirestore(user);
 
-            set({
-              user,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
+            // 상태 업데이트를 즉시 실행하여 화면 전환 지연 방지
+            requestAnimationFrame(() => {
+              set({
+                user,
+                isAuthenticated: true,
+                isLoading: false,
+                error: null,
+              });
             });
 
             console.log('회원가입 완료 - 상태 업데이트됨');
@@ -305,20 +311,25 @@ export const useAuthStore = create<AuthStore>()(
                 console.log('Firestore에서 사용자 정보 가져옴:', user);
               }
 
-              set({
-                user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null,
+              // WebView에서 즉시 상태 업데이트를 위해 requestAnimationFrame 사용
+              requestAnimationFrame(() => {
+                set({
+                  user,
+                  isAuthenticated: true,
+                  isLoading: false,
+                  error: null,
+                });
               });
             } else {
               // 로그아웃 시 완전한 상태 초기화
               console.log('Firebase Auth 로그아웃 감지 - 상태 초기화');
-              set({
-                user: null,
-                isAuthenticated: false,
-                isLoading: false,
-                error: null,
+              requestAnimationFrame(() => {
+                set({
+                  user: null,
+                  isAuthenticated: false,
+                  isLoading: false,
+                  error: null,
+                });
               });
             }
           });

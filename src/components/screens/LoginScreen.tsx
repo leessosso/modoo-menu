@@ -1,4 +1,4 @@
-import React, { useState, useCallback, memo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -14,18 +14,32 @@ import { Email, Lock, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import type { LoginCredentials } from '../../types/auth';
 import { UI_CONSTANTS, TEST_ACCOUNTS, APP_CONFIG } from '../../constants';
+import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 
-const LoginScreen: React.FC = memo(() => {
-  const { login, isLoading, error, clearError } = useAuthStore();
+const LoginScreen: React.FC = () => {
+  const { login, isLoading, error, clearError, isAuthenticated } = useAuthStore();
   const [credentials, setCredentials] = useState<LoginCredentials>({
     email: '',
     password: '',
   });
   const [showPassword, setShowPassword] = useState(false);
 
+  // 로그인 성공 시 WebView 렌더링 최적화
+  useEffect(() => {
+    if (isAuthenticated) {
+      optimizeWebViewTransition(() => {
+        console.log('로그인 성공 - WebView 렌더링 최적화 완료');
+      });
+    }
+  }, [isAuthenticated]);
+
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
+
+    // 로그인 시작 전 WebView 준비
+    optimizeWebViewTransition();
+
     await login(credentials);
   }, [credentials, login, clearError]);
 
@@ -146,6 +160,6 @@ const LoginScreen: React.FC = memo(() => {
       </Paper>
     </Container>
   );
-});
+};
 
 export default LoginScreen; 

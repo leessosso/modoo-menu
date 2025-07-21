@@ -121,6 +121,146 @@ dist/assets/js/DashboardHeader-Bf271Edx.js    1.04 kB  # DashboardHeader 컴포�
 - **EmptyState**: 빈 상태 표시용 범용 컴포넌트
 - **일관된 스타일링**: UI_CONSTANTS를 통한 표준화
 
+## 📋 **WebView 최적화 개발 가이드라인**
+
+> **⚡ 이 프로젝트는 웹뷰(WebView) 환경에서 실행되는 것을 전제로 개발됩니다.**
+
+### 🎯 **핵심 개발 원칙**
+
+#### **1. 렌더링 최적화 우선순위**
+
+| **순위** | **웹뷰 최적화** | **일반 웹 최적화** |
+|---|---|---|
+| **1순위** | 🎯 **즉시 응답성** | Bundle Size 최적화 |
+| **2순위** | 🎯 **화면 전환 부드러움** | Memory 효율성 |
+| **3순위** | 🎯 **터치 반응성** | CPU 사용량 절약 |
+| **4순위** | Bundle Size 최적화 | 즉시 응답성 |
+
+#### **2. 권장 패턴 (✅ DO)**
+
+##### **컴포넌트 작성**
+```typescript
+// ✅ 즉시 렌더링을 위한 일반 함수 컴포넌트
+const Component = () => {
+  useEffect(() => {
+    optimizeWebViewTransition(); // WebView 전용 최적화
+  }, []);
+  return <UI />;
+};
+
+// ✅ requestAnimationFrame을 활용한 상태 업데이트
+requestAnimationFrame(() => setState(newState));
+
+// ✅ 화면 전환 시 WebView 렌더링 보장
+const handleNavigation = () => {
+  optimizeWebViewTransition(() => navigate('/target'));
+};
+```
+
+##### **상태 관리**
+```typescript
+// ✅ Zustand store에서 WebView 최적화
+// authStore.ts, storeStore.ts 등
+requestAnimationFrame(() => {
+  set({ user, isAuthenticated: true });
+});
+```
+
+#### **3. 지양해야 할 패턴 (❌ DON'T)**
+
+```typescript
+// ❌ React.memo는 웹뷰에서 응답성 저하 원인
+const Component = memo(() => <UI />);
+
+// ❌ 동기적 상태 업데이트는 웹뷰에서 지연 발생  
+setState(newState);
+
+// ❌ 단순 라우팅은 웹뷰에서 화면 정지 원인
+navigate('/target');
+```
+
+#### **4. WebView Helper 함수 적극 활용**
+
+```typescript
+// src/utils/webviewHelper.ts 필수 사용
+import { 
+  optimizeWebViewTransition, 
+  forceRerender, 
+  ensureRender 
+} from '../utils/webviewHelper';
+
+// 🎯 화면 전환마다 필수 호출
+optimizeWebViewTransition(() => {
+  // 네비게이션이나 상태 변경 로직
+});
+
+// 🎯 렌더링이 멈춘 것 같을 때
+forceRerender();
+
+// 🎯 중요한 상태 변경 후  
+ensureRender();
+```
+
+### ⚡ **개발 시 필수 체크리스트**
+
+#### **새 컴포넌트 작성 시**
+- [ ] `React.memo` 사용하지 않았는가?
+- [ ] `useEffect`에서 `optimizeWebViewTransition()` 호출했는가?
+- [ ] 상태 변화 시 `requestAnimationFrame` 사용했는가?
+
+#### **화면 전환 구현 시**
+- [ ] 모든 네비게이션에 `optimizeWebViewTransition()` 적용했는가?
+- [ ] 버튼 클릭 시 강제 렌더링 호출했는가?
+- [ ] 웹뷰에서 실제 테스트해봤는가?
+
+#### **상태 관리 시**
+- [ ] Store 업데이트 시 `requestAnimationFrame` 사용했는가?
+- [ ] 로그인/로그아웃 후 화면 전환이 자연스러운가?
+- [ ] 터치 없이도 자동으로 화면이 전환되는가?
+
+### 🛠️ **WebView 최적화 적용 현황**
+
+#### **✅ 이미 적용된 컴포넌트**
+- `LoginScreen.tsx` - 로그인 성공 시 WebView 렌더링 최적화
+- `DashboardScreen.tsx` - 컴포넌트 마운트 시 최적화
+- `StoreOwnerDashboard.tsx` - 대시보드 + 네비게이션 최적화
+- `authStore.ts` - 모든 상태 업데이트에 `requestAnimationFrame` 적용
+
+#### **🔧 WebView 전용 유틸리티**
+- `src/utils/webviewHelper.ts` - 강제 리렌더링, 터치 활성화, 렌더링 보장
+- `src/index.css` - WebView 렌더링 최적화 CSS 추가
+- `App.tsx` - 경량화된 Suspense fallback
+
+### 💡 **WebView vs 일반 웹 차이점 이해**
+
+#### **일반 브라우저 환경**
+```typescript
+// 일반적인 최적화: 메모이제이션 중심
+const Component = memo(() => {
+  const value = useMemo(() => calculation(), [deps]);
+  const handler = useCallback(() => action(), [deps]);
+  return <UI />;
+});
+```
+
+#### **웹뷰 환경**  
+```typescript
+// 웹뷰 최적화: 즉시 응답성 중심
+const Component = () => {
+  useEffect(() => {
+    optimizeWebViewTransition(); // 핵심!
+  }, []);
+  
+  const handler = () => {
+    optimizeWebViewTransition(() => action()); // 핵심!
+  };
+  
+  return <UI />;
+};
+```
+
+---
+
 ## 🎯 핵심 기능
 
 ### 1. 사용자 인증 시스템 ✅

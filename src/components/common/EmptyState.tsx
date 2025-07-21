@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { Box, Typography, Button } from '@mui/material';
 import { UI_CONSTANTS } from '../../constants';
 
@@ -10,7 +10,7 @@ interface EmptyStateProps {
     onAction?: () => void;
 }
 
-const EmptyState: React.FC<EmptyStateProps> = memo(({
+const EmptyState: React.FC<EmptyStateProps> = ({
     icon,
     title,
     description,
@@ -46,8 +46,6 @@ const EmptyState: React.FC<EmptyStateProps> = memo(({
             )}
         </Box>
     );
-});
-
-EmptyState.displayName = 'EmptyState';
+};
 
 export default EmptyState; 

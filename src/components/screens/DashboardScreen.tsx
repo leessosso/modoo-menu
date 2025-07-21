@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   Box,
   Container,
@@ -18,9 +18,17 @@ import {
 import { useAuthStore } from '../../stores/authStore';
 import DashboardHeader from '../common/DashboardHeader';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
+import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 
-const DashboardScreen: React.FC = memo(() => {
+const DashboardScreen: React.FC = () => {
   const { user } = useAuthStore();
+
+  // 컴포넌트 마운트 시 WebView 렌더링 최적화
+  useEffect(() => {
+    optimizeWebViewTransition(() => {
+      console.log('고객 대시보드 렌더링 최적화 완료');
+    });
+  }, []);
 
   // 메뉴 아이템들을 useMemo로 최적화
   const menuItems = useMemo(() => [
@@ -177,6 +185,6 @@ const DashboardScreen: React.FC = memo(() => {
       </Container>
     </Box>
   );
-});
+};
 
 export default DashboardScreen; 

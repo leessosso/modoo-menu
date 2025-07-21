@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React from 'react';
 import { Box, Container, Typography, Button, Avatar } from '@mui/material';
 import { Person, Logout } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
@@ -11,7 +11,7 @@ interface DashboardHeaderProps {
     onLogout?: () => void;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = memo(({
+const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     title,
     icon = '',
     maxWidth = 'lg',
@@ -57,8 +57,6 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = memo(({
             </Container>
         </Box>
     );
-});
-
-DashboardHeader.displayName = 'DashboardHeader';
+};
 
 export default DashboardHeader; 
