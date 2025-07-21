@@ -29,13 +29,13 @@ export const UI_CONSTANTS = {
 // 테스트 계정 정보
 export const TEST_ACCOUNTS = {
     CUSTOMER: {
-        email: 'customer@test.com',
-        password: 'test123456',
+        email: 'sso3@naver.com',
+        password: 'password',
         label: '고객 계정',
     },
     STORE_OWNER: {
-        email: 'owner@test.com',
-        password: 'test123456',
+        email: 'store@example.com',
+        password: 'password',
         label: '매장관리자 계정',
     },
 } as const;

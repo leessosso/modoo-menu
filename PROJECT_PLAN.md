@@ -17,7 +17,7 @@
 - **인증 시스템**: Firebase Authentication
 - **라우팅**: React Router DOM v7 (HashRouter)
 
-## 🚀 최신 최적화 완료 사항 ✅ (2025.07.20)
+## 🚀 최신 최적화 완료 사항 ✅ (2025.07.21)
 
 ### 🎯 종합 최적화 결과
 
@@ -55,6 +55,12 @@
 - **코드 일관성**: 표준화된 스타일링 및 패턴 적용
 - **유지보수성**: 단일 소스 원칙으로 개선
 
+#### 6. WebView 로그아웃 에러 해결 ✅ (2025.07.21 완료)
+- **환경 감지**: Flutter/Android/iOS WebView 자동 식별
+- **최적화된 로그아웃**: 에러화면 없는 부드러운 화면 전환
+- **Flutter 연동**: 헬퍼 함수 지원으로 네이티브 앱과 연동
+- **안정성 향상**: WebView에서 완전히 안정적인 로그아웃 처리
+
 ### 📊 최적화 성과 요약
 
 | 항목 | 최적화 전 | 최적화 후 | 개선율 |
@@ -66,6 +72,7 @@
 | **빌드 시간** | 5.28s | 5.08s | -4% |
 | **중복 코드** | 여러 곳 분산 | 공통 컴포넌트화 | -100% |
 | **하드코딩** | 분산 관리 | 중앙 집중 | 통합 |
+| **WebView 로그아웃** | 에러화면 발생 | 부드러운 전환 | ✅ 해결 |
 
 ### 🛠️ 적용된 최적화 기술
 
@@ -99,6 +106,12 @@
    - **공통 컴포넌트**: `DashboardHeader`, `EmptyState` 분리
    - **코드 표준화**: 일관된 스타일링 및 네이밍 적용
    - **재사용성 향상**: 컴포넌트 기반 아키텍처 강화
+
+7. **WebView 로그아웃 최적화 (신규 완료)**
+   - **환경 감지**: `isWebView()` 함수로 WebView 환경 자동 식별
+   - **최적화된 처리**: `optimizeWebViewLogout()` 함수로 에러 없는 로그아웃
+   - **부드러운 전환**: 150ms 지연 + `requestAnimationFrame` 활용
+   - **Flutter 연동**: `window.flutterLogoutHelper` 지원
 
 ### 🎯 리팩토링 상세 성과 (2025.07.20)
 
@@ -225,10 +238,13 @@ ensureRender();
 - `DashboardScreen.tsx` - 컴포넌트 마운트 시 최적화
 - `StoreOwnerDashboard.tsx` - 대시보드 + 네비게이션 최적화
 - `authStore.ts` - 모든 상태 업데이트에 `requestAnimationFrame` 적용
+- **로그아웃 최적화** ✅ - WebView에서 로그아웃 후 에러화면 문제 해결 완료
 
 #### **🔧 WebView 전용 유틸리티**
 - `src/utils/webviewHelper.ts` - 강제 리렌더링, 터치 활성화, 렌더링 보장
-- `src/index.css` - WebView 렌더링 최적화 CSS 추가
+  - **WebView 환경 감지**: `isWebView()` - Flutter/Android/iOS WebView 자동 식별
+  - **최적화된 로그아웃**: `optimizeWebViewLogout()` - 에러화면 없는 부드러운 로그아웃
+- `src/index.css` - WebView 렌더링 최적화 CSS 추가 (`translateZ(0)` 하드웨어 가속)
 - `App.tsx` - 경량화된 Suspense fallback
 
 ### 💡 **WebView vs 일반 웹 차이점 이해**
@@ -567,6 +583,14 @@ src/
 - [x] 라우팅 문제 해결 (BrowserRouter → HashRouter)
 - [x] 로컬스토리지 완전 삭제 처리
 - [x] 페이지 리로드 방식 안전 처리
+
+### Phase 4.8: WebView 로그아웃 에러 해결 ✅ (2025.07.21 완료)
+- [x] WebView 환경 감지 함수 구현 (`isWebView()`)
+- [x] Flutter/Android/iOS WebView 자동 식별
+- [x] 최적화된 로그아웃 처리 (`optimizeWebViewLogout()`)
+- [x] Flutter 헬퍼 함수 연동 지원 (`window.flutterLogoutHelper`)
+- [x] 150ms 지연 후 부드러운 화면 전환
+- [x] **로그아웃 후 에러화면 문제 완전 해결** ✅
 
 ### Phase 6: 최적화 및 테스트 (지속적 개선) 🔄
 
