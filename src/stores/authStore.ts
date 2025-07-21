@@ -10,6 +10,7 @@ import {
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '../config/firebase';
+import { isWebView, optimizeWebViewLogout } from '../utils/webviewHelper';
 
 interface AuthState {
   // 상태
@@ -239,50 +240,87 @@ export const useAuthStore = create<AuthStore>()(
           try {
             console.log('로그아웃 시작');
 
-            // Firebase Auth 로그아웃 시도
-            try {
-              await signOut(auth);
-              console.log('Firebase Auth 로그아웃 성공');
-            } catch (firebaseError) {
-              console.warn('Firebase Auth 로그아웃 실패 (무시됨):', firebaseError);
-              // Firebase 로그아웃 실패해도 로컬 상태는 초기화
+            // WebView 환경 감지
+            if (isWebView()) {
+              console.log('🎯 WebView 환경 감지 - 최적화된 로그아웃 실행');
+
+              // WebView용 최적화된 로그아웃 처리
+              const firebaseLogout = async () => {
+                try {
+                  await signOut(auth);
+                  console.log('WebView: Firebase Auth 로그아웃 성공');
+                } catch (firebaseError) {
+                  console.warn('WebView: Firebase Auth 로그아웃 실패 (무시됨):', firebaseError);
+                }
+
+                // 로컬 상태 초기화
+                requestAnimationFrame(() => {
+                  set({
+                    user: null,
+                    isAuthenticated: false,
+                    isLoading: false,
+                    error: null,
+                  });
+                });
+              };
+
+              // WebView 최적화된 로그아웃 실행
+              await optimizeWebViewLogout(firebaseLogout);
+
+            } else {
+              console.log('🌐 일반 브라우저 환경 - 표준 로그아웃 실행');
+
+              // 일반 브라우저에서는 기존 방식
+              try {
+                await signOut(auth);
+                console.log('Firebase Auth 로그아웃 성공');
+              } catch (firebaseError) {
+                console.warn('Firebase Auth 로그아웃 실패 (무시됨):', firebaseError);
+              }
+
+              // 로컬 상태 초기화
+              requestAnimationFrame(() => {
+                set({
+                  user: null,
+                  isAuthenticated: false,
+                  isLoading: false,
+                  error: null,
+                });
+              });
+
+              // localStorage에서 인증 관련 정보 삭제
+              try {
+                localStorage.removeItem('auth-storage');
+                localStorage.removeItem('store-storage');
+                sessionStorage.clear();
+                console.log('모든 저장소 정보 삭제됨');
+              } catch (storageError) {
+                console.warn('저장소 삭제 실패 (무시됨):', storageError);
+              }
             }
 
-            // 로컬 상태 초기화 (웹뷰 환경에서도 안전하게 작동)
-            set({
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-              error: null,
-            });
+            console.log('✅ 로그아웃 완료 - 모든 상태 초기화됨');
 
-            // localStorage에서 모든 인증 관련 정보 삭제 (웹뷰 환경에서 중요)
-            try {
-              localStorage.removeItem('auth-storage');
-              localStorage.removeItem('store-storage'); // 매장 정보도 삭제
-              sessionStorage.clear(); // 세션 스토리지도 클리어
-              console.log('모든 저장소 정보 삭제됨');
-            } catch (storageError) {
-              console.warn('저장소 삭제 실패 (무시됨):', storageError);
-            }
-
-            console.log('로그아웃 완료 - 모든 상태 초기화됨');
           } catch (error) {
-            console.error('로그아웃 중 예상치 못한 오류:', error);
+            console.error('❌ 로그아웃 중 예상치 못한 오류:', error);
 
             // 오류가 발생해도 로컬 상태는 초기화
-            set({
-              user: null,
-              isAuthenticated: false,
-              isLoading: false,
-              error: null,
+            requestAnimationFrame(() => {
+              set({
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
+              });
             });
 
-            // 오류 발생 시에도 로컬스토리지 삭제 시도
+            // 비상 스토리지 정리
             try {
               localStorage.removeItem('auth-storage');
+              localStorage.removeItem('store-storage');
+              sessionStorage.clear();
             } catch (storageError) {
-              console.warn('로컬스토리지 삭제 실패:', storageError);
+              console.warn('비상 스토리지 정리 실패 (무시됨):', storageError);
             }
           }
         },
