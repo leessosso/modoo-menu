@@ -56,4 +56,33 @@ export interface CreateStoreData {
 
 export interface UpdateStoreData extends Partial<CreateStoreData> {
     isOpen?: boolean;
+}
+
+// 카테고리 생성/수정 데이터
+export interface CreateCategoryData {
+    name: string;
+    icon: string;
+    storeId: string;
+}
+
+export interface UpdateCategoryData extends Partial<Omit<CreateCategoryData, 'storeId'>> {
+    order?: number;
+}
+
+// 메뉴 아이템 생성/수정 데이터
+export interface CreateMenuItemData {
+    name: string;
+    description: string;
+    price: number;
+    image?: string;
+    categoryId: string;
+    storeId: string;
+    options?: MenuOption[];
+    allergens?: string[];
+    isPopular?: boolean;
+    isAvailable?: boolean;
+}
+
+export interface UpdateMenuItemData extends Partial<Omit<CreateMenuItemData, 'categoryId' | 'storeId'>> {
+    order?: number;
 } 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -12,13 +12,11 @@ import {
   Step,
   StepLabel,
 } from '@mui/material';
-import { Store, Business, Phone, Schedule } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import type { CreateStoreData } from '../../types/store';
-
-const steps = ['매장 기본 정보', '매장 상세 정보', '완료'];
+import { UI_CONSTANTS, STEPPER_STEPS } from '../../constants';
 
 const StoreRegisterScreen: React.FC = () => {
   const navigate = useNavigate();
@@ -34,129 +32,119 @@ const StoreRegisterScreen: React.FC = () => {
     businessHours: '',
   });
 
-  const handleNext = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const handleSubmit = async () => {
+  const handleSubmit = useCallback(async () => {
     if (!user) {
       return;
     }
 
     try {
       clearError();
-      const storeId = await createStore(storeData, user.id);
-      console.log('매장 생성 완료:', storeId);
+      await createStore(storeData, user.id);
       navigate('/store-dashboard');
     } catch (error) {
       console.error('매장 생성 실패:', error);
     }
-  };
+  }, [storeData, user, createStore, clearError, navigate]);
 
-  const handleChange = (field: keyof CreateStoreData) => (
-    e: React.ChangeEvent<HTMLInputElement>,
+  const handleChange = useCallback((field: keyof CreateStoreData) => (
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setStoreData(prev => ({
       ...prev,
       [field]: e.target.value,
     }));
-  };
+  }, []);
 
-  const isStepValid = (step: number) => {
+  const handleNext = useCallback(() => {
+    setActiveStep(prevActiveStep => prevActiveStep + 1);
+  }, []);
+
+  const handleBack = useCallback(() => {
+    setActiveStep(prevActiveStep => prevActiveStep - 1);
+  }, []);
+
+  const isStepValid = useCallback((step: number): boolean => {
     switch (step) {
       case 0:
-        return storeData.name.trim() !== '' && storeData.description.trim() !== '';
+        return !!(storeData.name && storeData.description);
       case 1:
-        return storeData.address.trim() !== '' && storeData.phone.trim() !== '';
+        return !!(storeData.address && storeData.phone && storeData.businessHours);
       default:
         return true;
     }
-  };
+  }, [storeData]);
 
   const renderStepContent = (step: number) => {
     switch (step) {
       case 0:
         return (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: UI_CONSTANTS.SPACING.MD }}>
             <TextField
               fullWidth
               label="매장명"
               value={storeData.name}
               onChange={handleChange('name')}
-              margin="normal"
               required
-              InputProps={{
-                startAdornment: <Store sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
+              helperText="고객에게 표시될 매장 이름을 입력하세요"
             />
             <TextField
               fullWidth
               label="매장 설명"
               value={storeData.description}
               onChange={handleChange('description')}
-              margin="normal"
-              required
               multiline
-              rows={3}
-              InputProps={{
-                startAdornment: <Business sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
+              rows={4}
+              required
+              helperText="매장의 특징이나 주요 메뉴를 소개해주세요"
             />
           </Box>
         );
       case 1:
         return (
-          <Box sx={{ mt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: UI_CONSTANTS.SPACING.MD }}>
             <TextField
               fullWidth
               label="매장 주소"
               value={storeData.address}
               onChange={handleChange('address')}
-              margin="normal"
               required
-              multiline
-              rows={2}
+              helperText="고객이 찾아올 수 있는 정확한 주소를 입력하세요"
             />
             <TextField
               fullWidth
               label="전화번호"
               value={storeData.phone}
               onChange={handleChange('phone')}
-              margin="normal"
+              type="tel"
               required
-              InputProps={{
-                startAdornment: <Phone sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
+              helperText="예: 02-1234-5678"
             />
             <TextField
               fullWidth
               label="영업시간"
               value={storeData.businessHours}
               onChange={handleChange('businessHours')}
-              margin="normal"
-              placeholder="예: 평일 09:00-18:00, 주말 10:00-17:00"
-              InputProps={{
-                startAdornment: <Schedule sx={{ mr: 1, color: 'text.secondary' }} />,
-              }}
+              required
+              helperText="예: 월-금 09:00-22:00, 주말 10:00-21:00"
             />
           </Box>
         );
       case 2:
         return (
-          <Box sx={{ mt: 2 }}>
-            <Typography variant="h6" gutterBottom>
-                            매장 정보 확인
+          <Box sx={{ textAlign: 'center', py: UI_CONSTANTS.SPACING.LG }}>
+            <Typography variant="h5" gutterBottom color="primary">
+              🎉 매장 등록 준비 완료!
             </Typography>
-            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
-              <Typography><strong>매장명:</strong> {storeData.name}</Typography>
-              <Typography><strong>설명:</strong> {storeData.description}</Typography>
-              <Typography><strong>주소:</strong> {storeData.address}</Typography>
-              <Typography><strong>전화번호:</strong> {storeData.phone}</Typography>
-              <Typography><strong>영업시간:</strong> {storeData.businessHours}</Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: UI_CONSTANTS.SPACING.MD }}>
+              입력하신 정보로 매장을 등록하시겠습니까?
+            </Typography>
+            <Box sx={{ bgcolor: 'grey.50', p: UI_CONSTANTS.SPACING.MD, borderRadius: 2, textAlign: 'left' }}>
+              <Typography variant="subtitle2" gutterBottom>매장 정보 요약</Typography>
+              <Typography variant="body2">• 매장명: {storeData.name}</Typography>
+              <Typography variant="body2">• 설명: {storeData.description}</Typography>
+              <Typography variant="body2">• 주소: {storeData.address}</Typography>
+              <Typography variant="body2">• 전화번호: {storeData.phone}</Typography>
+              <Typography variant="body2">• 영업시간: {storeData.businessHours}</Typography>
             </Box>
           </Box>
         );
@@ -166,46 +154,61 @@ const StoreRegisterScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper sx={{ p: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom color="primary" align="center">
-                    매장 등록
+    <Container maxWidth="md" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
+      <Paper sx={{ p: UI_CONSTANTS.SPACING.LG }}>
+        <Typography variant="h4" component="h1" gutterBottom color="primary" textAlign="center">
+          🏪 새 매장 등록
         </Typography>
-        <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }} align="center">
-                    새로운 매장을 등록해보세요
+        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+          매장 정보를 입력하여 새로운 매장을 등록하세요
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            {error}
-          </Alert>
-        )}
-
-        <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-          {steps.map((label) => (
+        {/* 스테퍼 */}
+        <Stepper activeStep={activeStep} sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+          {STEPPER_STEPS.STORE_REGISTER.map((label) => (
             <Step key={label}>
               <StepLabel>{label}</StepLabel>
             </Step>
           ))}
         </Stepper>
 
-        {renderStepContent(activeStep)}
+        {error && (
+          <Alert severity="error" sx={{ mb: UI_CONSTANTS.SPACING.MD }}>
+            {error}
+          </Alert>
+        )}
 
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
+        {/* 스텝 내용 */}
+        <Box sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+          {renderStepContent(activeStep)}
+        </Box>
+
+        {/* 네비게이션 버튼 */}
+        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
           <Button
-            disabled={activeStep === 0}
             onClick={handleBack}
+            disabled={activeStep === 0}
+            variant="outlined"
           >
-                        이전
+            이전
           </Button>
-          <Box>
-            {activeStep === steps.length - 1 ? (
+
+          <Box sx={{ display: 'flex', gap: UI_CONSTANTS.SPACING.SM }}>
+            <Button
+              variant="outlined"
+              onClick={() => navigate('/store-dashboard')}
+            >
+              취소
+            </Button>
+
+            {activeStep === STEPPER_STEPS.STORE_REGISTER.length - 1 ? (
               <Button
                 variant="contained"
                 onClick={handleSubmit}
                 disabled={isLoading}
+                startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
               >
-                {isLoading ? <CircularProgress size={24} /> : '매장 등록'}
+                {isLoading ? '등록 중...' : '매장 등록'}
               </Button>
             ) : (
               <Button
@@ -213,7 +216,7 @@ const StoreRegisterScreen: React.FC = () => {
                 onClick={handleNext}
                 disabled={!isStepValid(activeStep)}
               >
-                                다음
+                다음
               </Button>
             )}
           </Box>

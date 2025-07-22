@@ -13,16 +13,14 @@ import { auth, db } from '../config/firebase';
 import { isWebView, optimizeWebViewLogout } from '../utils/webviewHelper';
 
 interface AuthState {
-  // 상태
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  isHydrated: boolean; // persist 미들웨어 초기화 완료 여부
+  isHydrated: boolean;
 }
 
 interface AuthActions {
-  // 액션
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
@@ -32,7 +30,6 @@ interface AuthActions {
 }
 
 interface AuthSelectors {
-  // 선택자
   isStoreOwner: () => boolean;
   isCustomer: () => boolean;
   isAdmin: () => boolean;
@@ -47,15 +44,15 @@ const convertFirebaseUser = (firebaseUser: FirebaseUser): User => {
     id: firebaseUser.uid,
     email: firebaseUser.email || '',
     name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || '사용자',
-    role: 'customer', // 기본값, 나중에 Firestore에서 사용자 역할을 가져올 수 있음
+    role: 'customer', // 기본값, Firestore에서 실제 역할을 가져옴
     createdAt: new Date(firebaseUser.metadata.creationTime || Date.now()),
     lastLoginAt: new Date(),
   };
 };
 
-// Firestore에 사용자 정보 저장
-const saveUserToFirestore = async (user: User) => {
-  try {
+// Firestore 관련 유틸리티 함수들
+const firestoreUtils = {
+  async saveUser(user: User): Promise<void> {
     await setDoc(doc(db, 'users', user.id), {
       email: user.email,
       name: user.name,
@@ -65,35 +62,42 @@ const saveUserToFirestore = async (user: User) => {
       createdAt: user.createdAt,
       lastLoginAt: user.lastLoginAt,
     });
-    console.log('Firestore에 사용자 정보 저장 완료:', user.id);
-  } catch (error) {
-    console.error('Firestore 사용자 정보 저장 실패:', error);
-    throw error;
+  },
+
+  async getUser(uid: string): Promise<User | null> {
+    const userDoc = await getDoc(doc(db, 'users', uid));
+    if (!userDoc.exists()) return null;
+
+    const data = userDoc.data();
+    return {
+      id: uid,
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      role: data.role,
+      stores: data.stores || [],
+      createdAt: data.createdAt?.toDate() || new Date(),
+      lastLoginAt: data.lastLoginAt?.toDate() || new Date(),
+    };
   }
 };
 
-// Firestore에서 사용자 정보 가져오기
-const getUserFromFirestore = async (uid: string): Promise<User | null> => {
-  try {
-    const userDoc = await getDoc(doc(db, 'users', uid));
-    if (userDoc.exists()) {
-      const data = userDoc.data();
-      return {
-        id: uid,
-        email: data.email,
-        name: data.name,
-        phone: data.phone,
-        role: data.role,
-        stores: data.stores || [],
-        createdAt: data.createdAt?.toDate() || new Date(),
-        lastLoginAt: data.lastLoginAt?.toDate() || new Date(),
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error('Firestore에서 사용자 정보 가져오기 실패:', error);
-    return null;
-  }
+// 에러 메시지 매핑
+const getAuthErrorMessage = (errorCode: string): string => {
+  const errorMessages: Record<string, string> = {
+    'auth/user-not-found': '등록되지 않은 이메일입니다.',
+    'auth/wrong-password': '비밀번호가 올바르지 않습니다.',
+    'auth/invalid-email': '올바르지 않은 이메일 형식입니다.',
+    'auth/too-many-requests': '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.',
+    'auth/email-already-in-use': '이미 사용 중인 이메일입니다.',
+    'auth/weak-password': '비밀번호가 너무 약합니다. (최소 6자)',
+  };
+  return errorMessages[errorCode] || '인증 처리 중 오류가 발생했습니다.';
+};
+
+// 상태 업데이트 유틸리티
+const updateState = (set: any, updates: Partial<AuthState>) => {
+  requestAnimationFrame(() => set(updates));
 };
 
 export const useAuthStore = create<AuthStore>()(
@@ -119,39 +123,18 @@ export const useAuthStore = create<AuthStore>()(
             );
 
             const user = convertFirebaseUser(userCredential.user);
-
-            // 상태 업데이트를 즉시 실행하여 화면 전환 지연 방지
-            requestAnimationFrame(() => {
-              set({
-                user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null,
-              });
+            updateState(set, {
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
             });
           } catch (error: any) {
-            let errorMessage = '로그인에 실패했습니다.';
-
-            switch (error.code) {
-              case 'auth/user-not-found':
-                errorMessage = '등록되지 않은 이메일입니다.';
-                break;
-              case 'auth/wrong-password':
-                errorMessage = '비밀번호가 올바르지 않습니다.';
-                break;
-              case 'auth/invalid-email':
-                errorMessage = '올바르지 않은 이메일 형식입니다.';
-                break;
-              case 'auth/too-many-requests':
-                errorMessage = '너무 많은 로그인 시도가 있었습니다. 잠시 후 다시 시도해주세요.';
-                break;
-            }
-
-            set({
+            updateState(set, {
               user: null,
               isAuthenticated: false,
               isLoading: false,
-              error: errorMessage,
+              error: getAuthErrorMessage(error.code),
             });
           }
         },
@@ -160,8 +143,6 @@ export const useAuthStore = create<AuthStore>()(
           set({ isLoading: true, error: null });
 
           try {
-            console.log('회원가입 시작:', credentials.email);
-
             if (credentials.password !== credentials.confirmPassword) {
               throw new Error('비밀번호가 일치하지 않습니다.');
             }
@@ -172,19 +153,15 @@ export const useAuthStore = create<AuthStore>()(
               credentials.password,
             );
 
-            console.log('Firebase 사용자 생성 성공:', userCredential.user.uid);
-
-            // 사용자 프로필 업데이트 (이름 설정) - 선택적
-            try {
-              if (userCredential.user) {
+            // 프로필 업데이트 (선택적)
+            if (userCredential.user && credentials.name) {
+              try {
                 await (userCredential.user as any).updateProfile({
                   displayName: credentials.name,
                 });
-                console.log('프로필 업데이트 성공');
+              } catch (profileError) {
+                console.warn('프로필 업데이트 실패 (무시됨):', profileError);
               }
-            } catch (profileError) {
-              console.warn('프로필 업데이트 실패 (무시됨):', profileError);
-              // 프로필 업데이트 실패는 회원가입 실패로 처리하지 않음
             }
 
             const user = convertFirebaseUser(userCredential.user);
@@ -194,125 +171,70 @@ export const useAuthStore = create<AuthStore>()(
             }
             user.role = credentials.role || 'customer';
 
-            console.log('사용자 정보 설정:', user);
-
             // Firestore에 사용자 정보 저장
-            await saveUserToFirestore(user);
+            await firestoreUtils.saveUser(user);
 
-            // 상태 업데이트를 즉시 실행하여 화면 전환 지연 방지
-            requestAnimationFrame(() => {
-              set({
-                user,
-                isAuthenticated: true,
-                isLoading: false,
-                error: null,
-              });
+            updateState(set, {
+              user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
             });
-
-            console.log('회원가입 완료 - 상태 업데이트됨');
           } catch (error: any) {
             console.error('회원가입 오류:', error);
-
-            let errorMessage = '회원가입에 실패했습니다.';
-
-            switch (error.code) {
-              case 'auth/email-already-in-use':
-                errorMessage = '이미 사용 중인 이메일입니다.';
-                break;
-              case 'auth/weak-password':
-                errorMessage = '비밀번호가 너무 약합니다. (최소 6자)';
-                break;
-              case 'auth/invalid-email':
-                errorMessage = '올바르지 않은 이메일 형식입니다.';
-                break;
-            }
-
-            set({
+            updateState(set, {
               user: null,
               isAuthenticated: false,
               isLoading: false,
-              error: errorMessage,
+              error: error.message || getAuthErrorMessage(error.code),
             });
           }
         },
 
         logout: async () => {
+          const clearState = () => {
+            updateState(set, {
+              user: null,
+              isAuthenticated: false,
+              isLoading: false,
+              error: null,
+            });
+          };
+
           try {
-            console.log('로그아웃 시작');
-
-            // WebView 환경 감지
             if (isWebView()) {
-              console.log('🎯 WebView 환경 감지 - 최적화된 로그아웃 실행');
-
-              // WebView용 최적화된 로그아웃 처리
-              const firebaseLogout = async () => {
+              // WebView용 최적화된 로그아웃
+              await optimizeWebViewLogout(async () => {
                 try {
                   await signOut(auth);
-                  console.log('WebView: Firebase Auth 로그아웃 성공');
                 } catch (firebaseError) {
                   console.warn('WebView: Firebase Auth 로그아웃 실패 (무시됨):', firebaseError);
                 }
-
-                // 로컬 상태 초기화
-                requestAnimationFrame(() => {
-                  set({
-                    user: null,
-                    isAuthenticated: false,
-                    isLoading: false,
-                    error: null,
-                  });
-                });
-              };
-
-              // WebView 최적화된 로그아웃 실행
-              await optimizeWebViewLogout(firebaseLogout);
-
+                clearState();
+              });
             } else {
-              console.log('🌐 일반 브라우저 환경 - 표준 로그아웃 실행');
-
-              // 일반 브라우저에서는 기존 방식
+              // 일반 브라우저용 로그아웃
               try {
                 await signOut(auth);
-                console.log('Firebase Auth 로그아웃 성공');
               } catch (firebaseError) {
                 console.warn('Firebase Auth 로그아웃 실패 (무시됨):', firebaseError);
               }
 
-              // 로컬 상태 초기화
-              requestAnimationFrame(() => {
-                set({
-                  user: null,
-                  isAuthenticated: false,
-                  isLoading: false,
-                  error: null,
-                });
-              });
+              clearState();
 
-              // localStorage에서 인증 관련 정보 삭제
+              // 저장소 정리
               try {
                 localStorage.removeItem('auth-storage');
                 localStorage.removeItem('store-storage');
                 sessionStorage.clear();
-                console.log('모든 저장소 정보 삭제됨');
               } catch (storageError) {
                 console.warn('저장소 삭제 실패 (무시됨):', storageError);
               }
             }
-
-            console.log('✅ 로그아웃 완료 - 모든 상태 초기화됨');
-
           } catch (error) {
             console.error('❌ 로그아웃 중 예상치 못한 오류:', error);
-
             // 오류가 발생해도 로컬 상태는 초기화
-            requestAnimationFrame(() => {
-              set({
-                user: null,
-                isAuthenticated: false,
-                isLoading: false,
-                error: null,
-              });
-            });
+            clearState();
 
             // 비상 스토리지 정리
             try {
@@ -325,74 +247,53 @@ export const useAuthStore = create<AuthStore>()(
           }
         },
 
-        clearError: () => {
-          set({ error: null });
-        },
-
-        setLoading: (loading: boolean) => {
-          set({ isLoading: loading });
-        },
+        clearError: () => set({ error: null }),
+        setLoading: (loading: boolean) => set({ isLoading: loading }),
 
         initializeAuth: () => {
           return onAuthStateChanged(auth, async (firebaseUser) => {
-            console.log('Firebase Auth 상태 변화:', firebaseUser ? '로그인됨' : '로그아웃됨');
-
             if (firebaseUser) {
-              // Firestore에서 사용자 정보 가져오기 시도
-              let user = await getUserFromFirestore(firebaseUser.uid);
+              try {
+                // Firestore에서 사용자 정보 가져오기
+                let user = await firestoreUtils.getUser(firebaseUser.uid);
 
-              // Firestore에 정보가 없으면 기본 정보 사용
-              if (!user) {
-                user = convertFirebaseUser(firebaseUser);
-                console.log('Firestore에 사용자 정보 없음, 기본 정보 사용:', user);
-              } else {
-                console.log('Firestore에서 사용자 정보 가져옴:', user);
-              }
+                // Firestore에 정보가 없으면 기본 정보 사용
+                if (!user) {
+                  user = convertFirebaseUser(firebaseUser);
+                }
 
-              // WebView에서 즉시 상태 업데이트를 위해 requestAnimationFrame 사용
-              requestAnimationFrame(() => {
-                set({
+                updateState(set, {
                   user,
                   isAuthenticated: true,
                   isLoading: false,
                   error: null,
                 });
-              });
-            } else {
-              // 로그아웃 시 완전한 상태 초기화
-              console.log('Firebase Auth 로그아웃 감지 - 상태 초기화');
-              requestAnimationFrame(() => {
-                set({
+              } catch (error) {
+                console.error('사용자 정보 가져오기 실패:', error);
+                updateState(set, {
                   user: null,
                   isAuthenticated: false,
                   isLoading: false,
-                  error: null,
+                  error: '사용자 정보를 불러올 수 없습니다.',
                 });
+              }
+            } else {
+              // 로그아웃 상태
+              updateState(set, {
+                user: null,
+                isAuthenticated: false,
+                isLoading: false,
+                error: null,
               });
             }
           });
         },
 
         // 선택자
-        isStoreOwner: () => {
-          const { user } = get();
-          return user?.role === 'store_owner';
-        },
-
-        isCustomer: () => {
-          const { user } = get();
-          return user?.role === 'customer';
-        },
-
-        isAdmin: () => {
-          const { user } = get();
-          return user?.role === 'admin';
-        },
-
-        getUserStores: () => {
-          const { user } = get();
-          return user?.stores || [];
-        },
+        isStoreOwner: () => get().user?.role === 'store_owner',
+        isCustomer: () => get().user?.role === 'customer',
+        isAdmin: () => get().user?.role === 'admin',
+        getUserStores: () => get().user?.stores || [],
       }),
       {
         name: 'auth-storage',
@@ -401,24 +302,14 @@ export const useAuthStore = create<AuthStore>()(
           isAuthenticated: state.isAuthenticated,
         }),
         onRehydrateStorage: () => (state) => {
-          // persist 미들웨어가 초기화되면 로딩 상태를 false로 설정
-          console.log('AuthStore rehydrated:', state);
           if (state) {
             state.isLoading = false;
             state.isHydrated = true;
-            console.log('AuthStore state updated:', {
-              user: state.user,
-              isAuthenticated: state.isAuthenticated,
-              isLoading: state.isLoading,
-              isHydrated: state.isHydrated,
-            });
           }
         },
       },
     ),
-    {
-      name: 'auth-store',
-    },
+    { name: 'auth-store' },
   ),
 );
 

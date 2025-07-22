@@ -24,12 +24,10 @@ const LoginScreen: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
 
-  // 로그인 성공 시 WebView 렌더링 최적화
+  // WebView 렌더링 최적화 (로그인 성공 시)
   useEffect(() => {
     if (isAuthenticated) {
-      optimizeWebViewTransition(() => {
-        console.log('로그인 성공 - WebView 렌더링 최적화 완료');
-      });
+      optimizeWebViewTransition();
     }
   }, [isAuthenticated]);
 
@@ -37,7 +35,7 @@ const LoginScreen: React.FC = () => {
     e.preventDefault();
     clearError();
 
-    // 로그인 시작 전 WebView 준비
+    // WebView에서 즉시 응답성을 위한 강제 리렌더링
     optimizeWebViewTransition();
 
     await login(credentials);

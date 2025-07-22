@@ -23,11 +23,9 @@ import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 const DashboardScreen: React.FC = () => {
   const { user } = useAuthStore();
 
-  // 컴포넌트 마운트 시 WebView 렌더링 최적화
+  // WebView 렌더링 최적화
   useEffect(() => {
-    optimizeWebViewTransition(() => {
-      console.log('고객 대시보드 렌더링 최적화 완료');
-    });
+    optimizeWebViewTransition();
   }, []);
 
   // 메뉴 아이템들을 useMemo로 최적화

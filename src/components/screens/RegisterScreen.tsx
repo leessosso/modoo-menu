@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -8,12 +8,16 @@ import {
   Button,
   Alert,
   CircularProgress,
+  FormControl,
+  FormLabel,
+  RadioGroup,
+  FormControlLabel,
+  Radio,
 } from '@mui/material';
 import { Link } from 'react-router-dom';
 import { Email, Lock, Person, Phone, Visibility, VisibilityOff, Business, Person as PersonIcon } from '@mui/icons-material';
 import { useAuthStore } from '../../stores/authStore';
 import type { RegisterCredentials } from '../../types/auth';
-import { FormControl, FormLabel, RadioGroup, FormControlLabel, Radio } from '@mui/material';
 
 const RegisterScreen: React.FC = () => {
   const { register, isLoading, error, clearError } = useAuthStore();
@@ -28,30 +32,44 @@ const RegisterScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('회원가입 폼 제출:', credentials);
     clearError();
     await register(credentials);
-  };
+  }, [credentials, register, clearError]);
 
-  const handleChange = (field: keyof RegisterCredentials) => (
-    e: React.ChangeEvent<HTMLInputElement>,
+  const handleChange = useCallback((field: keyof RegisterCredentials) => (
+    e: React.ChangeEvent<HTMLInputElement>
   ) => {
     setCredentials(prev => ({
       ...prev,
       [field]: e.target.value,
     }));
-  };
+  }, []);
+
+  const handleRoleChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setCredentials(prev => ({
+      ...prev,
+      role: e.target.value as 'customer' | 'store_owner',
+    }));
+  }, []);
+
+  const handleTogglePassword = useCallback((field: 'password' | 'confirmPassword') => () => {
+    if (field === 'password') {
+      setShowPassword(prev => !prev);
+    } else {
+      setShowConfirmPassword(prev => !prev);
+    }
+  }, []);
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
       <Paper sx={{ p: 4, textAlign: 'center' }}>
         <Typography variant="h4" component="h1" gutterBottom color="primary">
-                    회원가입
+          회원가입
         </Typography>
         <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
-                    모두의 메뉴 계정을 만들어보세요
+          모두의 메뉴 계정을 만들어보세요
         </Typography>
 
         {error && (
@@ -107,7 +125,7 @@ const RegisterScreen: React.FC = () => {
               startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
               endAdornment: (
                 <Button
-                  onClick={() => { setShowPassword(!showPassword); }}
+                  onClick={handleTogglePassword('password')}
                   sx={{ minWidth: 'auto', p: 0.5 }}
                 >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
@@ -127,7 +145,7 @@ const RegisterScreen: React.FC = () => {
               startAdornment: <Lock sx={{ mr: 1, color: 'text.secondary' }} />,
               endAdornment: (
                 <Button
-                  onClick={() => { setShowConfirmPassword(!showConfirmPassword); }}
+                  onClick={handleTogglePassword('confirmPassword')}
                   sx={{ minWidth: 'auto', p: 0.5 }}
                 >
                   {showConfirmPassword ? <VisibilityOff /> : <Visibility />}
@@ -141,7 +159,7 @@ const RegisterScreen: React.FC = () => {
             <RadioGroup
               row
               value={credentials.role}
-              onChange={(e) => { setCredentials(prev => ({ ...prev, role: e.target.value as 'customer' | 'store_owner' })); }}
+              onChange={handleRoleChange}
             >
               <FormControlLabel
                 value="customer"
@@ -149,7 +167,7 @@ const RegisterScreen: React.FC = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <PersonIcon sx={{ mr: 1, fontSize: 20 }} />
-                                        고객
+                    고객
                   </Box>
                 }
               />
@@ -159,7 +177,7 @@ const RegisterScreen: React.FC = () => {
                 label={
                   <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     <Business sx={{ mr: 1, fontSize: 20 }} />
-                                        매장관리자
+                    매장관리자
                   </Box>
                 }
               />
@@ -179,9 +197,9 @@ const RegisterScreen: React.FC = () => {
 
           <Box sx={{ mt: 2 }}>
             <Typography variant="body2" color="text.secondary">
-                            이미 계정이 있으신가요?{' '}
+              이미 계정이 있으신가요?{' '}
               <Link to="/login" style={{ textDecoration: 'underline' }}>
-                                로그인
+                로그인
               </Link>
             </Typography>
           </Box>
