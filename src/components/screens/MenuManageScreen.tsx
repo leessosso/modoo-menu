@@ -32,7 +32,6 @@ import {
     Cancel as CancelIcon,
     RestaurantMenu as MenuIcon,
     Star as StarIcon,
-    Visibility as VisibleIcon,
     VisibilityOff as HiddenIcon,
     AttachMoney as PriceIcon,
     Category as CategoryIcon,
@@ -41,8 +40,7 @@ import { useStoreStore } from '../../stores/storeStore';
 import DashboardHeader from '../common/DashboardHeader';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
-import type { MenuItem as MenuItemType, CreateMenuItemData, Category } from '../../types/store';
-import { UI_CONSTANTS } from '../../constants';
+import type { MenuItem as MenuItemType, CreateMenuItemData } from '../../types/store';
 
 const ALLERGEN_OPTIONS = [
     '글루텐', '우유', '달걀', '견과류', '땅콩', '조개류', '생선', '대두', '참깨', '메밀'
@@ -96,6 +94,7 @@ const MenuManageScreen: React.FC = () => {
             }, 5000);
             return () => clearTimeout(timer);
         }
+        return undefined;
     }, [error, clearError]);
 
     const handleCategoryChange = (categoryId: string) => {

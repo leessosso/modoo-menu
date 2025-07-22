@@ -374,7 +374,7 @@ export const useStoreStore = create<StoreStore>()(
       },
 
       // 카테고리 순서 변경
-      reorderCategories: async (storeId: string, categoryIds: string[]) => {
+      reorderCategories: async (_storeId: string, categoryIds: string[]) => {
         set({ isLoading: true, error: null });
 
         try {

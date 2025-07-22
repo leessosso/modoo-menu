@@ -6,7 +6,6 @@ import {
     Typography,
     Button,
     IconButton,
-    Grid,
     Dialog,
     DialogTitle,
     DialogContent,
@@ -16,7 +15,6 @@ import {
     InputLabel,
     Select,
     MenuItem,
-    Chip,
     Paper,
     Divider,
     Alert,
@@ -36,7 +34,6 @@ import DashboardHeader from '../common/DashboardHeader';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import type { Category, CreateCategoryData } from '../../types/store';
-import { UI_CONSTANTS } from '../../constants';
 import { useNavigate } from 'react-router-dom';
 import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 
@@ -88,6 +85,7 @@ const CategoryManageScreen: React.FC = () => {
             }, 5000);
             return () => clearTimeout(timer);
         }
+        return undefined;
     }, [error, clearError]);
 
     const handleOpenDialog = (category?: Category) => {
