@@ -80,12 +80,13 @@ export const useStoreStore = create<StoreStore>()(
       // 매장 목록 가져오기
       fetchStores: async (ownerId: string) => {
         set({ isLoading: true, error: null });
+        console.log('🔍 매장 목록 가져오기 시작:', { ownerId });
 
         try {
           const storesQuery = query(
             collection(db, 'stores'),
             where('ownerId', '==', ownerId),
-            orderBy('createdAt', 'desc'),
+            // orderBy 제거 - Firebase 인덱스 문제 해결
           );
 
           const querySnapshot = await getDocs(storesQuery);
@@ -93,6 +94,7 @@ export const useStoreStore = create<StoreStore>()(
 
           querySnapshot.forEach((doc) => {
             const data = doc.data();
+            console.log('📄 매장 데이터:', { id: doc.id, data });
             stores.push({
               id: doc.id,
               ...data,
@@ -101,9 +103,13 @@ export const useStoreStore = create<StoreStore>()(
             } as Store);
           });
 
+          // 클라이언트에서 정렬 (createdAt 기준 내림차순)
+          stores.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+          console.log('✅ 매장 목록 가져오기 성공:', { count: stores.length, stores });
           set({ stores, isLoading: false });
         } catch (error: any) {
-          console.error('매장 목록 가져오기 실패:', error);
+          console.error('❌ 매장 목록 가져오기 실패:', error);
           set({
             error: '매장 목록을 가져오는데 실패했습니다.',
             isLoading: false,
@@ -146,6 +152,7 @@ export const useStoreStore = create<StoreStore>()(
       // 매장 생성
       createStore: async (data: CreateStoreData, ownerId: string) => {
         set({ isLoading: true, error: null });
+        console.log('🏪 매장 생성 시작:', { data, ownerId });
 
         try {
           const storeData = {
@@ -157,7 +164,9 @@ export const useStoreStore = create<StoreStore>()(
             updatedAt: new Date(),
           };
 
+          console.log('📝 Firestore에 저장할 데이터:', storeData);
           const docRef = await addDoc(collection(db, 'stores'), storeData);
+          console.log('✅ Firestore 저장 완료:', { docId: docRef.id });
 
           // 생성된 매장을 목록에 추가
           const newStore: Store = {
@@ -172,7 +181,7 @@ export const useStoreStore = create<StoreStore>()(
 
           return docRef.id;
         } catch (error: any) {
-          console.error('매장 생성 실패:', error);
+          console.error('❌ 매장 생성 실패:', error);
           set({
             error: '매장 생성에 실패했습니다.',
             isLoading: false,

@@ -7,6 +7,7 @@ import {
   Button,
   Card,
   CardContent,
+  CardActions,
   Divider,
   Chip,
 } from '@mui/material';
@@ -24,15 +25,28 @@ import DashboardHeader from '../common/DashboardHeader';
 import EmptyState from '../common/EmptyState';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
 import { optimizeWebViewTransition } from '../../utils/webviewHelper';
+import type { Store } from '../../types/store';
 
 const StoreOwnerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { stores, fetchStores } = useStoreStore();
+  const { stores, fetchStores, setCurrentStore } = useStoreStore();
+
+  // 디버깅용 stores 상태 출력
+  useEffect(() => {
+    console.log('📊 현재 stores 상태:', { stores, count: stores.length });
+  }, [stores]);
 
   useEffect(() => {
+    console.log('🔄 StoreOwnerDashboard useEffect 실행:', {
+      user: user ? { id: user.id, name: user.name, role: user.role } : null
+    });
+
     if (user) {
+      console.log('👤 사용자 인증됨, 매장 목록 가져오기 시작');
       fetchStores(user.id);
+    } else {
+      console.log('❌ 사용자 인증되지 않음');
     }
 
     // WebView 렌더링 최적화
@@ -84,6 +98,20 @@ const StoreOwnerDashboard: React.FC = () => {
       navigate('/menu-manage');
     });
   }, [navigate]);
+
+  const handleStoreMenuManage = useCallback((store: Store) => {
+    optimizeWebViewTransition(() => {
+      setCurrentStore(store);
+      navigate('/menu-manage');
+    });
+  }, [navigate, setCurrentStore]);
+
+  const handleStoreCategoryManage = useCallback((store: Store) => {
+    optimizeWebViewTransition(() => {
+      setCurrentStore(store);
+      navigate('/category-manage');
+    });
+  }, [navigate, setCurrentStore]);
 
   // 메뉴 아이템들을 useMemo로 최적화
   const menuItems = useMemo(() => [
@@ -170,8 +198,8 @@ const StoreOwnerDashboard: React.FC = () => {
           ) : (
             <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.TABLET, gap: UI_CONSTANTS.SPACING.MD }}>
               {displayStores.map((store) => (
-                <Card key={store.id} sx={{ height: '100%' }}>
-                  <CardContent>
+                <Card key={store.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <CardContent sx={{ flexGrow: 1 }}>
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: UI_CONSTANTS.SPACING.SM }}>
                       <Typography variant="h6" component="h3">
                         {store.name}
@@ -189,6 +217,37 @@ const StoreOwnerDashboard: React.FC = () => {
                       📍 {store.address}
                     </Typography>
                   </CardContent>
+                  <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<MenuBook />}
+                        onClick={() => handleStoreCategoryManage(store)}
+                        color="secondary"
+                      >
+                        카테고리
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        startIcon={<Receipt />}
+                        onClick={() => handleStoreMenuManage(store)}
+                        sx={{
+                          background: 'linear-gradient(45deg, #FF6B35 30%, #F7931E 90%)',
+                        }}
+                      >
+                        메뉴 관리
+                      </Button>
+                    </Box>
+                    <Button
+                      size="small"
+                      startIcon={<Edit />}
+                      color="inherit"
+                    >
+                      수정
+                    </Button>
+                  </CardActions>
                 </Card>
               ))}
             </Box>

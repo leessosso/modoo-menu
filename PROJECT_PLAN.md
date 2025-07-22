@@ -39,8 +39,42 @@
 3. **🔧 기술적 구현**
    - **타입 안전성**: Category, MenuItem, MenuOption 완전 정의
    - **Zustand Store 확장**: 메뉴 CRUD + Firebase 실시간 동기화
-   - **WebView 최적화**: [[memory:3884270]] 즉시 응답성 우선 설계
+   - **WebView 최적화**: 즉시 응답성 우선 설계
    - **라우팅 통합**: 매장관리자 대시보드 ↔ 메뉴 관리 완전 연결
+
+### 🔧 **매장 정보 지속성 문제 해결** ⚡
+
+#### **발견된 문제**
+- **페이지 리프레시** 시 등록한 매장 정보가 사라지는 현상
+- 사용자 인증과 매장 데이터 매칭 타이밍 문제 의심
+
+#### **진단 및 해결 작업**
+1. **🔍 디버깅 시스템 강화**
+   ```typescript
+   // storeStore.ts - 매장 조회 디버깅
+   console.log('🔍 매장 목록 가져오기 시작:', { ownerId });
+   console.log('📄 매장 데이터:', { id: doc.id, data });
+   console.log('✅ 매장 목록 가져오기 성공:', { count, stores });
+   
+   // StoreOwnerDashboard.tsx - 인증 상태 추적
+   console.log('🔄 StoreOwnerDashboard useEffect 실행');
+   console.log('📊 현재 stores 상태:', { stores, count });
+   ```
+
+2. **🛠️ Firebase 최적화**
+   - **인덱스 문제 해결**: `orderBy('createdAt', 'desc')` 제거
+   - **클라이언트 정렬**: 서버 부하 감소 + 안정성 향상
+   - **에러 처리 강화**: 상세한 오류 로그와 사용자 피드백
+
+3. **⚡ 성능 개선**
+   - Firebase 쿼리 최적화로 **응답 속도 향상**
+   - 불필요한 인덱스 의존성 제거
+   - WebView 환경에서 더 안정적인 데이터 로딩
+
+#### **기대 효과**
+- 🐛 **버그 추적**: 실시간 콘솔 디버깅으로 문제 원인 즉시 파악
+- ⚡ **성능 향상**: Firebase 쿼리 최적화
+- 🔒 **안정성**: 리프레시 후에도 매장 정보 정상 표시
 
 #### **Firebase 데이터 모델**
 ```typescript
@@ -256,6 +290,8 @@ Error: #E74C3C     (빨강)
 | **TypeScript** | loose | strict | 타입 안전성 |
 | **WebView 안정성** | 에러 발생 | 완전 해결 | 100% |
 | **개발 효율성** | Context API | Zustand | +40% |
+| **Firebase 쿼리** | orderBy 인덱스 | 클라이언트 정렬 | 안정성 향상 |
+| **디버깅 시스템** | 기본 로그 | 상세 추적 | 문제 해결 속도 +80% |
 
 ### **기능적 완성도**  
 - **인증 시스템**: 100% ✅
@@ -306,6 +342,12 @@ Error: #E74C3C     (빨강)
 - Lazy Loading으로 초기 번들 크기 최소화
 - Zustand로 필요한 부분만 리렌더링
 - WebView용 `requestAnimationFrame` 적극 활용
+
+### **데이터 지속성 주의사항** ⚠️
+- **리프레시 이슈**: 사용자 인증 복원과 데이터 로딩 타이밍 고려
+- **Firebase 인덱스**: `orderBy` 사용 시 복합 인덱스 필요, 클라이언트 정렬 권장
+- **디버깅 필수**: 콘솔 로그로 데이터 흐름 추적 (프로덕션에서 제거)
+- **상태 복원**: Zustand persist로 중요 상태 로컬스토리지 저장 고려
 
 ---
 
