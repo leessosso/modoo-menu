@@ -24,6 +24,7 @@ interface AuthActions {
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (credentials: RegisterCredentials) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => Promise<void>;
   clearError: () => void;
   setLoading: (loading: boolean) => void;
   initializeAuth: () => (() => void) | undefined;
@@ -244,6 +245,35 @@ export const useAuthStore = create<AuthStore>()(
             } catch (storageError) {
               console.warn('비상 스토리지 정리 실패 (무시됨):', storageError);
             }
+          }
+        },
+
+        updateUser: async (userData: Partial<User>) => {
+          const currentUser = get().user;
+          if (!currentUser) {
+            throw new Error('로그인된 사용자가 없습니다.');
+          }
+
+          try {
+            // Firestore 업데이트
+            await setDoc(doc(db, 'users', currentUser.id), {
+              ...userData,
+              lastLoginAt: new Date(),
+            }, { merge: true });
+
+            // 로컬 상태 업데이트
+            const updatedUser = {
+              ...currentUser,
+              ...userData,
+              lastLoginAt: new Date(),
+            };
+
+            updateState(set, {
+              user: updatedUser,
+            });
+          } catch (error) {
+            console.error('사용자 정보 업데이트 실패:', error);
+            throw new Error('사용자 정보 업데이트에 실패했습니다.');
           }
         },
 

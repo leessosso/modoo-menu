@@ -16,6 +16,11 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family: 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  overflow-x: hidden;
+}
+
+html {
+  overflow-x: hidden;
 }
 
 /* Typography는 MUI Typography 컴포넌트 사용 */
