@@ -20,6 +20,7 @@ const CategoryManageScreen = React.lazy(() => import('./components/screens/Categ
 const MenuManageScreen = React.lazy(() => import('./components/screens/MenuManageScreen'));
 const UserProfileScreen = React.lazy(() => import('./components/screens/UserProfileScreen'));
 const AccountInfoScreen = React.lazy(() => import('./components/screens/AccountInfoScreen'));
+const UserMenuScreen = React.lazy(() => import('./components/screens/UserMenuScreen'));
 
 // 로딩 스피너 컴포넌트 (WebView 즉시 렌더링 최적화)
 const SuspenseLoader = () => (
@@ -134,6 +135,11 @@ const AppContent: React.FC = () => {
           } />
 
           {/* 사용자 정보 관리 화면들 */}
+          <Route path="/user-menu" element={
+            <ProtectedRoute>
+              <UserMenuScreen />
+            </ProtectedRoute>
+          } />
           <Route path="/user-profile" element={
             <ProtectedRoute>
               <UserProfileScreen />
