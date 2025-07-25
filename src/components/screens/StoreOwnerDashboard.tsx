@@ -30,7 +30,7 @@ import type { Store } from '../../types/store';
 const StoreOwnerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { user, logout } = useAuthStore();
-  const { stores, fetchStores, setCurrentStore } = useStoreStore();
+  const { stores, setCurrentStore } = useStoreStore();
 
   // 디버깅용 stores 상태 출력
   useEffect(() => {
@@ -38,20 +38,14 @@ const StoreOwnerDashboard: React.FC = () => {
   }, [stores]);
 
   useEffect(() => {
-    console.log('🔄 StoreOwnerDashboard useEffect 실행:', {
-      user: user ? { id: user.id, name: user.name, role: user.role } : null
+    console.log('🔄 StoreOwnerDashboard 렌더링:', {
+      user: user ? { id: user.id, name: user.name, role: user.role } : null,
+      storesCount: stores.length
     });
-
-    if (user) {
-      console.log('👤 사용자 인증됨, 매장 목록 가져오기 시작');
-      fetchStores(user.id);
-    } else {
-      console.log('❌ 사용자 인증되지 않음');
-    }
 
     // WebView 렌더링 최적화
     optimizeWebViewTransition();
-  }, [user, fetchStores]);
+  }, [user, stores]);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -244,6 +238,11 @@ const StoreOwnerDashboard: React.FC = () => {
                       size="small"
                       startIcon={<Edit />}
                       color="inherit"
+                      onClick={() => {
+                        optimizeWebViewTransition(() => {
+                          navigate(`/store-edit/${store.id}`);
+                        });
+                      }}
                     >
                       수정
                     </Button>

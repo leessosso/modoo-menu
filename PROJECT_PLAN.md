@@ -15,7 +15,7 @@
 
 ---
 
-## 🚀 최신 업데이트 (2025.07.24)
+## 🚀 최신 업데이트 (2025.07.25)
 
 ### ✅ **완료된 주요 기능**
 
@@ -34,28 +34,31 @@
 - **일관된 UX**: 뒤로가기 버튼으로 직관적인 네비게이션
 
 #### 3. **MUI v7 완전 호환**
-- **API 업데이트**: `ListItemButton`, Grid 시스템 등 v7 표준 적용
+- **Grid v7 문법 적용**: `item` 속성 제거, 직접 브레이크포인트 사용
+- **Box 레이아웃 권장**: 더 직관적인 CSS Grid/Flexbox 사용 선호
+- **ListItemButton 사용**: `ListItem button` 속성 대신 `ListItemButton` 컴포넌트 사용
 - **TypeScript 에러 해결**: 미사용 import 정리, strict 모드 준수
 - **코드 품질**: ESLint 에러 0개 달성
 
-#### 4. **매장 관리 시스템**
-- **매장 CRUD**: 등록/수정/삭제/목록 관리
-- **카테고리 관리**: 이모지 아이콘 + 드래그 앤 드롭 순서 변경
+#### 4. **매장 관리 시스템 (NEW!)**
+- **매장 CRUD**: 등록/수정/삭제/목록 관리 + **매장 수정 화면 완성**
+- **카테고리 관리**: 이모지 아이콘 + 메뉴 개수 실시간 표시
 - **메뉴 관리**: 가격, 알레르기 정보, 인기 메뉴 설정
-- **실시간 동기화**: Firebase Firestore 연동
+- **실시간 동기화**: Firebase onSnapshot으로 완전 구현
+- **데이터 일관성**: 전역 상태 관리로 개인화 정보 안정적 저장
 
 ---
 
 ## 📊 현재 프로젝트 상태
 
-### ✅ **Phase 3 시스템 완성도: 100%** 🎉
+### ✅ **Phase 3 시스템 완성도: 98%** 🎉
 
 | 시스템 | 완성도 | 주요 기능 |
 |--------|---------|-----------|
 | **🔐 인증 시스템** | 100% | 로그인/회원가입/역할 관리/세션 유지 |
 | **👥 사용자 관리** | 100% | 프로필 수정/계정 정보/독립 메뉴 페이지 |
-| **🏪 매장 관리** | 100% | 매장 CRUD/목록 조회/상세 정보 |
-| **📂 메뉴 시스템** | 100% | 카테고리 관리/메뉴 아이템 CRUD/알레르기 정보 |
+| **🏪 매장 관리** | 95% | 매장 CRUD/목록 조회/수정 화면 완성 |
+| **📂 메뉴 시스템** | 100% | 카테고리 관리/메뉴 아이템 CRUD/실시간 동기화 |
 | **📱 WebView 최적화** | 100% | 렌더링 최적화/viewport 문제 해결/로그아웃 처리 |
 | **🎨 UI/UX** | 100% | MUI v7 완전 호환/반응형 디자인/컴포넌트 시스템 |
 
@@ -161,18 +164,52 @@ optimizeWebViewLogout()      // 로그아웃 최적화
 - [ ] MUI v7 API 사용 (`ListItemButton`, Grid 등)
 - [ ] WebView에서 실제 테스트 완료
 
-### ⚠️ **MUI v7 호환성**
+### ⚠️ **MUI v7 사용법 가이드**
+
+> **💡 참고**: 이 프로젝트는 MUI v7을 사용합니다. v7에 맞는 올바른 문법을 사용해주세요.
+
+#### **Grid 시스템 v7 변경점**
 ```typescript
-// ❌ MUI v6 이하 (사용 금지)
-<Grid item xs={12}>
+// ❌ MUI v6 이하 방식
+<Grid container spacing={2}>
+  <Grid item xs={12} md={6}>
+    <Card>...</Card>
+  </Grid>
+</Grid>
+
+// ✅ MUI v7 Grid 방식 (사용 가능)
+<Grid container spacing={2}>
+  <Grid xs={12} md={6}>  {/* item 속성 제거 */}
+    <Card>...</Card>
+  </Grid>
+</Grid>
+
+// ✅ MUI v7 Box 방식 (권장 - 더 직관적)
+<Box sx={{ 
+  display: 'grid', 
+  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+  gap: 2 
+}}>
+  <Card>...</Card>
+</Box>
+
+// ✅ MUI v7 Flexbox 방식 (권장)
+<Box sx={{ 
+  display: 'flex',
+  flexDirection: { xs: 'column', md: 'row' },
+  gap: 2
+}}>
+  <Card>...</Card>
+</Box>
+```
+
+#### **기타 v7 변경사항**
+```typescript
+// ❌ v6 이하
 <ListItem button onClick={handleClick}>
 
-// ✅ MUI v7 (권장) - 단순 레이아웃
-<Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+// ✅ v7
 <ListItemButton onClick={handleClick}>
-
-// ✅ MUI v7 (권장) - 복잡 레이아웃
-<Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 2 }}>
 ```
 
 ---
@@ -208,7 +245,7 @@ Week 4: 주문 처리 + 상태 추적
 
 ### 📊 **기능적 완성도**
 - **인증 + 사용자 관리**: 100% ✅
-- **매장 + 메뉴 관리**: 100% ✅
+- **매장 + 메뉴 관리**: 98% ✅ (실시간 동기화 완료, 매장 수정 화면 완성, 카테고리 드래그앤드롭만 남음)
 - **UI/UX + WebView 최적화**: 100% ✅
 - **고객용 시스템**: 0% (다음 단계)
 
@@ -218,7 +255,7 @@ Week 4: 주문 처리 + 상태 추적
 
 ### 🔥 **Firebase 최적화**
 - **쿼리 최적화**: `orderBy` 대신 클라이언트 정렬 사용
-- **실시간 동기화**: Firestore onSnapshot으로 상태 업데이트
+- **실시간 동기화**: ✅ Firestore onSnapshot으로 상태 업데이트 완료
 - **보안 규칙**: 매장관리자는 자신의 매장만 수정 가능
 
 ### 🎨 **UI 디자인 시스템**
@@ -248,17 +285,39 @@ window.debugAuth.fixTestAccounts()          # 테스트 계정 수정
 ```
 안녕하세요! 이 모두의 메뉴 프로젝트에 대해 중요한 정보들을 기억해주세요:
 
-1. 이 프로젝트는 MUI v7을 사용합니다.
+🎯 **프로젝트 기본 정보**
+- 프로젝트명: 모두의 메뉴 (QR코드 기반 메뉴 주문 시스템)
+- 기술 스택: React 19 + TypeScript + Vite, MUI v7, Firebase Firestore + Authentication, Zustand 상태 관리
+- 배포 환경: Flutter WebView
+- 현재 상태: Phase 3 완료 (100%) - 인증, 사용자 관리, 매장 관리, 메뉴 시스템, WebView 최적화, UI/UX 완성
+- 다음 단계: Phase 4 고객용 시스템 (QR코드 스캔, 메뉴 브라우징, 장바구니, 주문 처리)
+- 오늘 날짜: 2025년 7월 25일
 
-2. 이 프로젝트는 웹뷰(WebView) 환경에서 실행되는 것을 전제로 개발되어야 합니다. 따라서 일반적인 웹 브라우저 최적화보다는 웹뷰의 특성에 맞춘 최적화 접근법을 사용해야 합니다: React.memo 사용 자제(즉시 렌더링 우선), requestAnimationFrame을 활용한 상태 업데이트, 강제 리렌더링 유틸리티 사용, 터치 이벤트 시뮬레이션, 화면 전환 시 웹뷰 렌더링 최적화 적용. 사용자 경험과 즉시 응답성이 메모이제이션이나 번들 크기 최적화보다 우선시되어야 합니다.
+📱 **WebView 최적화 핵심 원칙**
+- 즉시 응답성 우선: React.memo 사용 자제, requestAnimationFrame 활용한 상태 업데이트
+- 부드러운 화면 전환: optimizeWebViewTransition() 필수 사용
+- WebView 전용 유틸리티: src/utils/webviewHelper.ts (optimizeWebViewTransition, isWebView, optimizeWebViewLogout)
+- 로그아웃 최적화: Flutter 헬퍼 함수 연동, 150ms 지연 후 부드러운 화면 전환으로 에러화면 문제 완전 해결
 
-3. 이 프로젝트(my-web-app)에서 새 채팅창으로 대화를 시작할 때는 항상 @PROJECT_PLAN.md 파일을 기본적으로 참고하고 대화를 진행해야 합니다. 이 파일에는 프로젝트의 전체 개요, 기술 스택, 완료된 기능들, 현재 진행 상황, 폴더 구조 등 모든 중요한 정보가 담겨 있습니다.
+🎨 **UI/UX 및 코드 품질**
+- **MUI v7 완전 적용**: Grid v7 문법 또는 Box + CSS flexbox/grid 사용
+- **ListItemButton 사용**: ListItem button 속성 대신 ListItemButton 컴포넌트 사용
+- 사용자 메뉴 시스템: Drawer → 독립 페이지(UserMenuScreen)로 변경하여 WebView viewport 문제 해결
+- 프로필 관리: UserProfileScreen, AccountInfoScreen으로 분리된 전체 화면 활용 UI
+- 코드 품질: TypeScript strict 모드, ESLint 에러 0개 유지
 
-4. 오늘 날짜는 2025년 7월 24일입니다. PROJECT_PLAN.md나 다른 문서의 날짜를 업데이트할 때 이 날짜를 기준으로 사용해야 합니다.
+📋 **개발 체크리스트**
+- 새 컴포넌트에서 React.memo 사용 금지
+- 화면 전환 시 optimizeWebViewTransition() 호출
+- **MUI v7 확인사항**:
+  - ✅ Grid 사용 시 v7 문법 적용 (item 속성 제거)
+  - ✅ Box + CSS flexbox/grid 사용 권장 (더 직관적)
+  - ✅ ListItemButton 사용 (ListItem button 속성 대신)
+- WebView 실제 테스트 완료
 
-5. WebView 환경에서 로그아웃 후 발생하던 에러화면 문제가 완전히 해결되었습니다. isWebView() 함수로 환경을 감지하고, optimizeWebViewLogout() 함수로 최적화된 로그아웃 처리를 구현했습니다. Flutter 헬퍼 함수 연동, 150ms 지연 후 부드러운 화면 전환, requestAnimationFrame을 활용한 상태 업데이트 등이 적용되어 에러화면 없이 정상적으로 로그인 페이지로 전환됩니다.
-
-6. 사용자 메뉴 시스템이 Drawer에서 독립 페이지(UserMenuScreen)로 변경되었습니다. WebView 환경에서 발생하던 viewport 문제를 해결하기 위해 전체 화면을 활용하는 페이지 기반 UI로 구현했으며, MUI v7에 맞게 Grid 대신 Box + CSS flexbox를 사용합니다. 이로 인해 WebView 안정성과 사용자 경험이 크게 개선되었습니다.
+📁 **필수 참고사항**
+- 새 채팅창 시작 시 항상 @PROJECT_PLAN.md 파일 참고 (프로젝트 전체 개요, 기술 스택, 완료 기능, 진행 상황, 폴더 구조 포함)
+- PROJECT_PLAN.md 문서 업데이트 시 2025년 7월 25일 기준 사용
 
 이 내용들을 기억해주세요.
 ```
@@ -278,7 +337,7 @@ MUI 버전, WebView 최적화, PROJECT_PLAN.md 참고 등에 대해 알고 있�
 
 ---
 
-> **📝 마지막 업데이트**: 2025년 7월 24일  
-> **🎯 현재 단계**: Phase 3 완료 (매장관리자 시스템 + WebView 최적화)  
+> **📝 마지막 업데이트**: 2025년 7월 25일  
+> **🎯 현재 단계**: Phase 3 98% 완료 (매장관리자 시스템 + WebView 최적화)  
 > **🚀 다음 목표**: Phase 4 시작 (고객용 시스템)  
-> **⚡ 최신 개선**: Drawer → 독립 페이지 전환으로 WebView 안정성 100% 달성 
+> **⚡ 최신 개선**: 매장 수정 화면 완성 + 전역 상태 관리로 개인화 정보 안정화 

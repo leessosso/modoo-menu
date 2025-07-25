@@ -4,6 +4,7 @@ import { ThemeProvider } from '@mui/material/styles';
 import { CssBaseline } from '@mui/material';
 import { theme } from './theme';
 import { useAuthStore } from './stores/authStore';
+import { useStoreStore } from './stores/storeStore';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -15,6 +16,7 @@ const RegisterScreen = React.lazy(() => import('./components/screens/RegisterScr
 const DashboardScreen = React.lazy(() => import('./components/screens/DashboardScreen'));
 const StoreOwnerDashboard = React.lazy(() => import('./components/screens/StoreOwnerDashboard'));
 const StoreRegisterScreen = React.lazy(() => import('./components/screens/StoreRegisterScreen'));
+const StoreEditScreen = React.lazy(() => import('./components/screens/StoreEditScreen'));
 const StoreListScreen = React.lazy(() => import('./components/screens/StoreListScreen'));
 const CategoryManageScreen = React.lazy(() => import('./components/screens/CategoryManageScreen'));
 const MenuManageScreen = React.lazy(() => import('./components/screens/MenuManageScreen'));
@@ -49,6 +51,7 @@ const SuspenseLoader = () => (
 // 메인 앱 컴포넌트
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user, isHydrated, initializeAuth } = useAuthStore();
+  const { subscribeToStores, unsubscribeFromStores, setCurrentStore, stores } = useStoreStore();
 
   // Firebase 인증 초기화
   useEffect(() => {
@@ -73,6 +76,29 @@ const AppContent: React.FC = () => {
         return '/dashboard';
     }
   }, [user?.role]);
+
+  // 매장관리자 사용자 인증 시 매장 데이터 로드
+  useEffect(() => {
+    if (isAuthenticated && user?.role === 'store_owner' && user.id) {
+      console.log('🏪 매장관리자 인증됨, 매장 데이터 구독 시작:', { userId: user.id });
+      subscribeToStores(user.id);
+    } else {
+      console.log('🔕 매장 데이터 구독 해제');
+      unsubscribeFromStores();
+    }
+
+    return () => {
+      unsubscribeFromStores();
+    };
+  }, [isAuthenticated, user?.role, user?.id, subscribeToStores, unsubscribeFromStores]);
+
+  // 매장 목록이 로드되면 첫 번째 매장을 자동 선택
+  useEffect(() => {
+    if (stores.length > 0 && user?.role === 'store_owner') {
+      console.log('🎯 첫 번째 매장 자동 선택:', stores[0]);
+      setCurrentStore(stores[0]);
+    }
+  }, [stores, user?.role, setCurrentStore]);
 
   // WebView 렌더링 최적화
   useEffect(() => {
@@ -114,6 +140,11 @@ const AppContent: React.FC = () => {
           <Route path="/store-register" element={
             <ProtectedRoute requiredRole="store_owner">
               <StoreRegisterScreen />
+            </ProtectedRoute>
+          } />
+          <Route path="/store-edit/:storeId" element={
+            <ProtectedRoute requiredRole="store_owner">
+              <StoreEditScreen />
             </ProtectedRoute>
           } />
           <Route path="/store-list" element={

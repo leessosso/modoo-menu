@@ -49,12 +49,15 @@ const ALLERGEN_OPTIONS = [
 const MenuManageScreen: React.FC = () => {
     const {
         currentStore,
+        stores,
         categories,
         menuItems,
         isLoading,
         error,
-        fetchCategories,
-        fetchMenuItems,
+        subscribeToCategories,
+        unsubscribeFromCategories,
+        subscribeToMenuItems,
+        unsubscribeFromMenuItems,
         createMenuItem,
         updateMenuItem,
         deleteMenuItem,
@@ -74,12 +77,22 @@ const MenuManageScreen: React.FC = () => {
         isAvailable: true,
     });
 
+    // 매장 자동 선택은 App.tsx에서 전역적으로 처리됨
+
     useEffect(() => {
         if (currentStore?.id) {
-            fetchCategories(currentStore.id);
-            fetchMenuItems();
+            console.log('🔄 MenuManageScreen 구독 시작:', { storeId: currentStore.id });
+            subscribeToCategories(currentStore.id);
+            subscribeToMenuItems(currentStore.id);
         }
-    }, [currentStore?.id, fetchCategories, fetchMenuItems]);
+
+        // 컴포넌트 언마운트 시 구독 해제
+        return () => {
+            console.log('🔕 MenuManageScreen 구독 해제');
+            unsubscribeFromCategories();
+            unsubscribeFromMenuItems();
+        };
+    }, [currentStore?.id, subscribeToCategories, subscribeToMenuItems, unsubscribeFromCategories, unsubscribeFromMenuItems]);
 
     useEffect(() => {
         if (categories.length > 0 && !selectedCategoryId) {
@@ -89,13 +102,20 @@ const MenuManageScreen: React.FC = () => {
 
     useEffect(() => {
         if (error) {
+            console.log('⚠️ MenuManageScreen 에러 발생:', error);
             const timer = setTimeout(() => {
                 clearError();
-            }, 5000);
+                // 에러 발생 후 재구독 시도
+                if (currentStore?.id) {
+                    console.log('🔄 MenuManageScreen 재구독 시도');
+                    subscribeToCategories(currentStore.id);
+                    subscribeToMenuItems(currentStore.id);
+                }
+            }, 3000);
             return () => clearTimeout(timer);
         }
         return undefined;
-    }, [error, clearError]);
+    }, [error, clearError, currentStore?.id, subscribeToCategories, subscribeToMenuItems]);
 
     const handleCategoryChange = (categoryId: string) => {
         setSelectedCategoryId(categoryId);
@@ -223,6 +243,35 @@ const MenuManageScreen: React.FC = () => {
         }).format(price);
     };
 
+    // 로딩 중인 경우
+    if (isLoading) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <LoadingSpinner />
+            </Box>
+        );
+    }
+
+    // 매장이 없는 경우
+    if (stores.length === 0) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <DashboardHeader title="메뉴 관리" />
+                <EmptyState
+                    icon={<MenuIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
+                    title="등록된 매장이 없습니다"
+                    description="먼저 매장을 등록해주세요."
+                    actionLabel="매장 등록"
+                    onAction={() => {
+                        // 매장 등록 페이지로 이동
+                        window.location.href = '/store-register';
+                    }}
+                />
+            </Box>
+        );
+    }
+
+    // 매장이 선택되지 않은 경우
     if (!currentStore) {
         return (
             <Box sx={{ p: 3 }}>

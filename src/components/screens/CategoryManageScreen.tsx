@@ -55,10 +55,12 @@ const CategoryManageScreen: React.FC = () => {
     const navigate = useNavigate();
     const {
         currentStore,
+        stores,
         categories,
         isLoading,
         error,
-        fetchCategories,
+        subscribeToCategories,
+        unsubscribeFromCategories,
         createCategory,
         updateCategory,
         deleteCategory,
@@ -72,11 +74,20 @@ const CategoryManageScreen: React.FC = () => {
         icon: '🍴',
     });
 
+    // 매장 자동 선택은 App.tsx에서 전역적으로 처리됨
+
     useEffect(() => {
         if (currentStore?.id) {
-            fetchCategories(currentStore.id);
+            subscribeToCategories(currentStore.id);
         }
-    }, [currentStore?.id, fetchCategories]);
+
+        // 컴포넌트 언마운트 시 구독 해제
+        return () => {
+            if (currentStore?.id) {
+                unsubscribeFromCategories();
+            }
+        };
+    }, [currentStore?.id, subscribeToCategories, unsubscribeFromCategories]);
 
     useEffect(() => {
         if (error) {
@@ -154,6 +165,45 @@ const CategoryManageScreen: React.FC = () => {
         }));
     };
 
+    if (!currentStore) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <Alert severity="warning">
+                    매장을 선택해주세요.
+                </Alert>
+            </Box>
+        );
+    }
+
+    // 로딩 중인 경우
+    if (isLoading) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <LoadingSpinner />
+            </Box>
+        );
+    }
+
+    // 매장이 없는 경우
+    if (stores.length === 0) {
+        return (
+            <Box sx={{ p: 3 }}>
+                <DashboardHeader title="카테고리 관리" />
+                <EmptyState
+                    icon={<CategoryIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
+                    title="등록된 매장이 없습니다"
+                    description="먼저 매장을 등록해주세요."
+                    actionLabel="매장 등록"
+                    onAction={() => {
+                        // 매장 등록 페이지로 이동
+                        window.location.href = '/store-register';
+                    }}
+                />
+            </Box>
+        );
+    }
+
+    // 매장이 선택되지 않은 경우
     if (!currentStore) {
         return (
             <Box sx={{ p: 3 }}>

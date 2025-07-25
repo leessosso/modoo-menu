@@ -11,6 +11,7 @@ import {
   query,
   where,
   orderBy,
+  onSnapshot,
 } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import type {
@@ -32,12 +33,18 @@ interface StoreState {
   menuItems: MenuItem[];
   isLoading: boolean;
   error: string | null;
+  // 실시간 동기화를 위한 구독 관리
+  storesUnsubscribe: (() => void) | null;
+  categoriesUnsubscribe: (() => void) | null;
+  menuItemsUnsubscribe: (() => void) | null;
 }
 
 interface StoreActions {
   // 매장 목록 관리
   fetchStores: (ownerId: string) => Promise<void>;
   fetchStore: (storeId: string) => Promise<Store | null>;
+  subscribeToStores: (ownerId: string) => void;
+  unsubscribeFromStores: () => void;
 
   // 매장 CRUD
   createStore: (data: CreateStoreData, ownerId: string) => Promise<string>;
@@ -46,6 +53,8 @@ interface StoreActions {
 
   // 카테고리 관리
   fetchCategories: (storeId: string) => Promise<void>;
+  subscribeToCategories: (storeId: string) => void;
+  unsubscribeFromCategories: () => void;
   createCategory: (data: CreateCategoryData) => Promise<string>;
   updateCategory: (categoryId: string, data: UpdateCategoryData) => Promise<void>;
   deleteCategory: (categoryId: string) => Promise<void>;
@@ -53,6 +62,8 @@ interface StoreActions {
 
   // 메뉴 아이템 관리
   fetchMenuItems: (categoryId?: string) => Promise<void>;
+  subscribeToMenuItems: (storeId: string) => void;
+  unsubscribeFromMenuItems: () => void;
   createMenuItem: (data: CreateMenuItemData) => Promise<string>;
   updateMenuItem: (itemId: string, data: UpdateMenuItemData) => Promise<void>;
   deleteMenuItem: (itemId: string) => Promise<void>;
@@ -76,8 +87,12 @@ export const useStoreStore = create<StoreStore>()(
       menuItems: [],
       isLoading: false,
       error: null,
+      // 실시간 동기화를 위한 구독 관리
+      storesUnsubscribe: null,
+      categoriesUnsubscribe: null,
+      menuItemsUnsubscribe: null,
 
-      // 매장 목록 가져오기
+      // 매장 목록 가져오기 (일회성)
       fetchStores: async (ownerId: string) => {
         set({ isLoading: true, error: null });
         console.log('🔍 매장 목록 가져오기 시작:', { ownerId });
@@ -114,6 +129,68 @@ export const useStoreStore = create<StoreStore>()(
             error: '매장 목록을 가져오는데 실패했습니다.',
             isLoading: false,
           });
+        }
+      },
+
+      // 매장 목록 실시간 구독
+      subscribeToStores: (ownerId: string) => {
+        console.log('🔔 매장 목록 실시간 구독 시작:', { ownerId });
+
+        // 기존 구독 해제
+        const { storesUnsubscribe } = get();
+        if (storesUnsubscribe) {
+          storesUnsubscribe();
+        }
+
+        try {
+          const storesQuery = query(
+            collection(db, 'stores'),
+            where('ownerId', '==', ownerId),
+          );
+
+          const unsubscribe = onSnapshot(storesQuery, (querySnapshot) => {
+            const stores: Store[] = [];
+
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              stores.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                updatedAt: data.updatedAt?.toDate() || new Date(),
+              } as Store);
+            });
+
+            // 클라이언트에서 정렬 (createdAt 기준 내림차순)
+            stores.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+            console.log('🔄 매장 목록 실시간 업데이트:', { count: stores.length, stores });
+            set({ stores, isLoading: false });
+          }, (error) => {
+            console.error('❌ 매장 목록 실시간 구독 실패:', error);
+            set({
+              error: '매장 목록 실시간 동기화에 실패했습니다.',
+              isLoading: false,
+            });
+          });
+
+          set({ storesUnsubscribe: unsubscribe });
+        } catch (error: any) {
+          console.error('❌ 매장 목록 구독 설정 실패:', error);
+          set({
+            error: '매장 목록 구독 설정에 실패했습니다.',
+            isLoading: false,
+          });
+        }
+      },
+
+      // 매장 목록 구독 해제
+      unsubscribeFromStores: () => {
+        const { storesUnsubscribe } = get();
+        if (storesUnsubscribe) {
+          console.log('🔕 매장 목록 구독 해제');
+          storesUnsubscribe();
+          set({ storesUnsubscribe: null });
         }
       },
 
@@ -247,7 +324,7 @@ export const useStoreStore = create<StoreStore>()(
         }
       },
 
-      // 카테고리 목록 가져오기
+      // 카테고리 목록 가져오기 (일회성)
       fetchCategories: async (storeId: string) => {
         set({ isLoading: true, error: null });
 
@@ -281,6 +358,110 @@ export const useStoreStore = create<StoreStore>()(
             error: '카테고리 목록을 가져오는데 실패했습니다.',
             isLoading: false,
           });
+        }
+      },
+
+      // 카테고리 실시간 구독 (메뉴 아이템 개수 포함)
+      subscribeToCategories: (storeId: string) => {
+        console.log('🔔 카테고리 실시간 구독 시작:', { storeId });
+
+        // 기존 구독 해제
+        const { categoriesUnsubscribe } = get();
+        if (categoriesUnsubscribe) {
+          categoriesUnsubscribe();
+        }
+
+        try {
+          // orderBy 제거하여 Firebase 인덱스 문제 해결
+          const categoriesQuery = query(
+            collection(db, 'categories'),
+            where('storeId', '==', storeId),
+          );
+
+          const unsubscribe = onSnapshot(categoriesQuery, async (querySnapshot) => {
+            const categories: Category[] = [];
+
+            // 카테고리 데이터 처리
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              const category: Category = {
+                id: doc.id,
+                name: data.name,
+                icon: data.icon,
+                storeId: data.storeId,
+                order: data.order,
+                items: [], // 임시로 빈 배열 설정
+              };
+              categories.push(category);
+            });
+
+            // 각 카테고리별 메뉴 아이템 개수 가져오기
+            const categoriesWithItems = await Promise.all(
+              categories.map(async (category) => {
+                try {
+                  const menuItemsQuery = query(
+                    collection(db, 'menuItems'),
+                    where('categoryId', '==', category.id),
+                  );
+                  const menuItemsSnapshot = await getDocs(menuItemsQuery);
+
+                  return {
+                    ...category,
+                    items: menuItemsSnapshot.docs.map(doc => ({
+                      id: doc.id,
+                      ...doc.data(),
+                    })) as MenuItem[],
+                  };
+                } catch (error) {
+                  console.error(`카테고리 ${category.id} 메뉴 아이템 가져오기 실패:`, error);
+                  return category;
+                }
+              })
+            );
+
+            // 클라이언트에서 정렬 (order 기준 오름차순)
+            categoriesWithItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            console.log('🔄 카테고리 실시간 업데이트:', {
+              count: categoriesWithItems.length,
+              categories: categoriesWithItems.map(c => ({
+                id: c.id,
+                name: c.name,
+                itemCount: c.items.length
+              }))
+            });
+            set({ categories: categoriesWithItems, isLoading: false });
+          }, (error) => {
+            console.error('❌ 카테고리 실시간 구독 실패:', error);
+            // 에러 발생 시 구독 해제
+            const { categoriesUnsubscribe: currentUnsubscribe } = get();
+            if (currentUnsubscribe) {
+              currentUnsubscribe();
+            }
+            set({
+              error: '카테고리 실시간 동기화에 실패했습니다.',
+              isLoading: false,
+              categoriesUnsubscribe: null,
+            });
+          });
+
+          set({ categoriesUnsubscribe: unsubscribe });
+        } catch (error: any) {
+          console.error('❌ 카테고리 구독 설정 실패:', error);
+          set({
+            error: '카테고리 구독 설정에 실패했습니다.',
+            isLoading: false,
+          });
+        }
+      },
+
+      // 카테고리 구독 해제
+      unsubscribeFromCategories: () => {
+        const { categoriesUnsubscribe } = get();
+        if (categoriesUnsubscribe) {
+          console.log('🔕 카테고리 구독 해제');
+          categoriesUnsubscribe();
+          set({ categoriesUnsubscribe: null });
         }
       },
 
@@ -412,7 +593,7 @@ export const useStoreStore = create<StoreStore>()(
         }
       },
 
-      // 메뉴 아이템 목록 가져오기
+      // 메뉴 아이템 목록 가져오기 (일회성)
       fetchMenuItems: async (categoryId?: string) => {
         set({ isLoading: true, error: null });
 
@@ -459,6 +640,75 @@ export const useStoreStore = create<StoreStore>()(
             error: '메뉴 목록을 가져오는데 실패했습니다.',
             isLoading: false,
           });
+        }
+      },
+
+      // 메뉴 아이템 실시간 구독
+      subscribeToMenuItems: (storeId: string) => {
+        console.log('🔔 메뉴 아이템 실시간 구독 시작:', { storeId });
+
+        // 기존 구독 해제
+        const { menuItemsUnsubscribe } = get();
+        if (menuItemsUnsubscribe) {
+          menuItemsUnsubscribe();
+        }
+
+        try {
+          // orderBy 제거하여 Firebase 인덱스 문제 해결
+          const menuItemsQuery = query(
+            collection(db, 'menuItems'),
+            where('storeId', '==', storeId),
+          );
+
+          const unsubscribe = onSnapshot(menuItemsQuery, (querySnapshot) => {
+            const menuItems: MenuItem[] = [];
+
+            querySnapshot.forEach((doc) => {
+              const data = doc.data();
+              menuItems.push({
+                id: doc.id,
+                ...data,
+                createdAt: data.createdAt?.toDate() || new Date(),
+                updatedAt: data.updatedAt?.toDate() || new Date(),
+              } as MenuItem);
+            });
+
+            // 클라이언트에서 정렬 (order 기준 오름차순)
+            menuItems.sort((a, b) => (a.order || 0) - (b.order || 0));
+
+            console.log('🔄 메뉴 아이템 실시간 업데이트:', { count: menuItems.length, menuItems });
+            set({ menuItems, isLoading: false });
+          }, (error) => {
+            console.error('❌ 메뉴 아이템 실시간 구독 실패:', error);
+            // 에러 발생 시 구독 해제
+            const { menuItemsUnsubscribe: currentUnsubscribe } = get();
+            if (currentUnsubscribe) {
+              currentUnsubscribe();
+            }
+            set({
+              error: '메뉴 아이템 실시간 동기화에 실패했습니다.',
+              isLoading: false,
+              menuItemsUnsubscribe: null,
+            });
+          });
+
+          set({ menuItemsUnsubscribe: unsubscribe });
+        } catch (error: any) {
+          console.error('❌ 메뉴 아이템 구독 설정 실패:', error);
+          set({
+            error: '메뉴 아이템 구독 설정에 실패했습니다.',
+            isLoading: false,
+          });
+        }
+      },
+
+      // 메뉴 아이템 구독 해제
+      unsubscribeFromMenuItems: () => {
+        const { menuItemsUnsubscribe } = get();
+        if (menuItemsUnsubscribe) {
+          console.log('🔕 메뉴 아이템 구독 해제');
+          menuItemsUnsubscribe();
+          set({ menuItemsUnsubscribe: null });
         }
       },
 
