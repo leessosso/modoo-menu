@@ -1,0 +1,179 @@
+# 모두의 메뉴 프로젝트 - Cursor Rules
+
+## 🌍 언어 설정
+- 항상 한국어로 응답하세요
+- 코드 주석도 한국어로 작성하세요
+
+## 📋 프로젝트 컨텍스트
+이 프로젝트는 "모두의 메뉴" - 실시간 위치 기반 메뉴 주문 시스템입니다.
+- **기술 스택**: React 19 + TypeScript + Vite, MUI v7, Firebase, Zustand
+- **배포 환경**: Flutter WebView
+- **현재 상태**: Phase 3 완료 (98%) - 매장관리자 시스템 구축 완료
+- **다음 목표**: Phase 4 고객용 시스템 개발
+
+## 🎯 최우선 원칙
+1. **WebView 최적화가 최우선** - 일반 웹 최적화보다 WebView 특성에 맞춘 최적화
+2. **즉시 응답성** - 사용자 경험과 즉시 응답성이 메모이제이션보다 우선
+3. **MUI v7 호환성** - 반드시 최신 v7 문법 사용
+4. **타입 안전성** - TypeScript strict 모드 준수
+
+## 📱 WebView 환경 최적화 규칙
+
+### ✅ 권장 사항
+- 새 컴포넌트에서 `React.memo` 사용 **지양** (즉시 렌더링 우선)
+- 화면 전환 시 `optimizeWebViewTransition()` **권장 호출**
+- 상태 업데이트 시 `requestAnimationFrame` 활용
+- WebView 전용 유틸리티 함수 적극 활용:
+  - `optimizeWebViewTransition()` - 화면 전환 최적화
+  - `isWebView()` - WebView 환경 감지
+  - `optimizeWebViewLogout()` - 로그아웃 최적화
+
+### 📁 WebView 헬퍼 사용법
+```typescript
+import { optimizeWebViewTransition } from '@/utils/webviewHelper';
+
+// 화면 전환 전 권장 호출
+const handleNavigation = () => {
+  optimizeWebViewTransition();
+  navigate('/target-screen');
+};
+```
+
+## 🎨 MUI v7 사용 규칙
+
+### ✅ 권장 사항 (v7 호환)
+```typescript
+// ✅ MUI v7 Grid (사용 가능)
+<Grid container spacing={2}>
+  <Grid xs={12} md={6}>  {/* item 속성 제거됨 */}
+    <Card>내용</Card>
+  </Grid>
+</Grid>
+
+// ✅ Box + CSS (더 권장됨)
+<Box sx={{ 
+  display: 'grid', 
+  gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
+  gap: 2 
+}}>
+  <Card>내용</Card>
+</Box>
+
+// ✅ ListItemButton 사용
+<ListItemButton onClick={handleClick}>
+  <ListItemText primary="메뉴 항목" />
+</ListItemButton>
+```
+
+### ❌ 지양 사항 (v6 이하)
+```typescript
+// ❌ 구버전 Grid 문법
+<Grid item xs={12}>  {/* item 속성 사용 지양 */}
+
+// ❌ 구버전 ListItem
+<ListItem button onClick={handleClick}>  {/* button 속성 사용 지양 */}
+```
+
+## 🔥 Firebase + Zustand 패턴
+
+### ✅ 권장 패턴
+```typescript
+// Store 파일에서 Firebase 실시간 동기화
+const useStoreStore = create<StoreState>((set, get) => ({
+  // onSnapshot 활용한 실시간 데이터 동기화
+  subscribeToStores: (ownerId: string) => {
+    return onSnapshot(
+      query(collection(db, 'stores'), where('ownerId', '==', ownerId)),
+      (snapshot) => {
+        const stores = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        set({ stores });
+      }
+    );
+  },
+}));
+```
+
+## 🧹 코드 품질 규칙
+
+### TypeScript
+- **strict 모드** 준수
+- 모든 타입 명시적으로 정의
+- `any` 타입 사용 지양
+- 미사용 import 정리
+
+### ESLint
+- **에러 0개** 유지
+- Warning도 최대한 해결
+- 미사용 변수/함수 정리
+
+### 폴더 구조 준수
+```
+src/
+├── components/
+│   ├── common/     # 공통 컴포넌트
+│   └── screens/    # 화면별 컴포넌트
+├── stores/         # Zustand 상태 관리
+├── types/          # TypeScript 타입 정의
+├── utils/          # 유틸리티 함수 (WebView 헬퍼 포함)
+└── config/         # Firebase 등 설정
+```
+
+## 🚀 개발 워크플로우
+
+### 새 컴포넌트 개발 시
+1. **타입 정의** 먼저 작성 (`types/` 폴더)
+2. **MUI v7 문법** 확인 후 구현
+3. **WebView 최적화** 적용
+4. **실시간 동기화** 필요 시 Zustand + onSnapshot 패턴 사용
+5. **TypeScript 에러** 완전 해결 후 커밋
+
+### 화면 전환 구현 시
+```typescript
+import { optimizeWebViewTransition } from '@/utils/webviewHelper';
+
+const handleNavigate = useCallback(() => {
+  optimizeWebViewTransition(); // 권장!
+  navigate('/target-path');
+}, [navigate]);
+```
+
+### 상태 업데이트 시
+```typescript
+// requestAnimationFrame 활용
+const updateState = useCallback((newData: any) => {
+  requestAnimationFrame(() => {
+    setData(newData);
+  });
+}, []);
+```
+
+## 📚 참고 파일
+- **프로젝트 전체 이해**: `PROJECT_PLAN.md` 필수 참고
+- **WebView 헬퍼**: `src/utils/webviewHelper.ts`
+- **타입 정의**: `src/types/` 폴더
+- **상태 관리**: `src/stores/` 폴더
+
+## 🐛 디버깅 도구
+개발 환경에서 사용 가능한 전역 함수들:
+```javascript
+window.debugAuth.getCurrentUser()           // 현재 사용자 정보
+window.debugAuth.changeMyRole("store_owner") // 역할 변경
+window.debugAuth.fixTestAccounts()          // 테스트 계정 수정
+```
+
+## ⚠️ 주의사항
+- **React.memo 사용 권장하지 않음** (WebView 즉시 응답성 방해)
+- **MUI v6 이하 문법 사용 지양**
+- **WebView 전환 전 optimizeWebViewTransition() 호출 권장**
+- **Firebase 쿼리 최적화** - orderBy 대신 클라이언트 정렬 선호
+- **프로젝트 규모가 크므로** 새 기능 추가 전 기존 구조 파악 필수
+
+## 🎯 Phase 4 개발 준비사항
+다음 단계인 고객용 시스템 개발을 위해:
+- 실시간 거리측정 기반 매장 찾기 (GPS 위치 활용)
+- QR코드 스캔 기능 (보조 수단)
+- 고객용 메뉴 브라우징
+- 장바구니 시스템
+- 주문 처리 플로우
+
+모든 새 기능도 WebView 최적화와 MUI v7 호환성을 준수해야 합니다. 

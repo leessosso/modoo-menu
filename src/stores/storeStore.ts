@@ -42,6 +42,7 @@ interface StoreState {
 interface StoreActions {
   // 매장 목록 관리
   fetchStores: (ownerId: string) => Promise<void>;
+  fetchAllStores: () => Promise<void>; // 고객용 모든 매장 목록 가져오기
   fetchStore: (storeId: string) => Promise<Store | null>;
   subscribeToStores: (ownerId: string) => void;
   unsubscribeFromStores: () => void;
@@ -125,6 +126,45 @@ export const useStoreStore = create<StoreStore>()(
           set({ stores, isLoading: false });
         } catch (error: any) {
           console.error('❌ 매장 목록 가져오기 실패:', error);
+          set({
+            error: '매장 목록을 가져오는데 실패했습니다.',
+            isLoading: false,
+          });
+        }
+      },
+
+      // 고객용 모든 매장 목록 가져오기 (일회성)
+      fetchAllStores: async () => {
+        set({ isLoading: true, error: null });
+        console.log('🔍 모든 매장 목록 가져오기 시작 (고객용)');
+
+        try {
+          const storesQuery = query(
+            collection(db, 'stores'),
+            // ownerId 필터링 없이 모든 매장 가져오기
+          );
+
+          const querySnapshot = await getDocs(storesQuery);
+          const stores: Store[] = [];
+
+          querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            console.log('📄 매장 데이터 (고객용):', { id: doc.id, data });
+            stores.push({
+              id: doc.id,
+              ...data,
+              createdAt: data.createdAt?.toDate() || new Date(),
+              updatedAt: data.updatedAt?.toDate() || new Date(),
+            } as Store);
+          });
+
+          // 클라이언트에서 정렬 (이름 기준 오름차순)
+          stores.sort((a, b) => a.name.localeCompare(b.name));
+
+          console.log('✅ 모든 매장 목록 가져오기 성공 (고객용):', { count: stores.length, stores });
+          set({ stores, isLoading: false });
+        } catch (error: any) {
+          console.error('❌ 모든 매장 목록 가져오기 실패:', error);
           set({
             error: '매장 목록을 가져오는데 실패했습니다.',
             isLoading: false,
