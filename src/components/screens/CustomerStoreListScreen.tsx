@@ -21,7 +21,6 @@ import {
     LocationOn as LocationOnIcon,
     Phone as PhoneIcon,
     AccessTime as AccessTimeIcon,
-    Star as StarIcon,
 } from '@mui/icons-material';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
@@ -34,24 +33,24 @@ interface StoreWithDistance extends Store {
     distance?: number;
 }
 
-// 거리 계산 함수 (haversine formula)
-const calculateDistance = (
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-): number => {
-    const R = 6371; // 지구 반지름 (km)
-    const dLat = (lat2 - lat1) * Math.PI / 180;
-    const dLon = (lon2 - lon1) * Math.PI / 180;
-    const a =
-        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-        Math.sin(dLon / 2) * Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    const distance = R * c;
-    return Math.round(distance * 10) / 10; // 소수점 1자리까지
-};
+// 거리 계산 함수 (haversine formula) - 향후 실제 위치 기반 거리 계산에 사용 예정
+// const calculateDistance = (
+//     lat1: number,
+//     lon1: number,
+//     lat2: number,
+//     lon2: number
+// ): number => {
+//     const R = 6371; // 지구 반지름 (km)
+//     const dLat = (lat2 - lat1) * Math.PI / 180;
+//     const dLon = (lon2 - lon1) * Math.PI / 180;
+//     const a =
+//         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+//         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+//         Math.sin(dLon / 2) * Math.sin(dLon / 2);
+//     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+//     const distance = R * c;
+//     return Math.round(distance * 10) / 10; // 소수점 1자리까지
+// };
 
 // 현재 위치 가져오기 함수
 const getCurrentLocation = (): Promise<{ lat: number; lon: number }> => {
