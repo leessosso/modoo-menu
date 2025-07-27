@@ -118,7 +118,8 @@ const DashboardScreen: React.FC = () => {
   // 매장 선택
   const handleStoreSelect = (store: Store) => {
     console.log('매장 선택:', store);
-    alert(`${store.name} 매장이 선택되었습니다. 메뉴 화면 개발 예정!`);
+    optimizeWebViewTransition();
+    navigate(`/store/${store.id}/menu`);
   };
 
   // 메뉴 아이템들을 useMemo로 최적화

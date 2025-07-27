@@ -28,6 +28,30 @@
   - `isWebView()` - WebView 환경 감지
   - `optimizeWebViewLogout()` - 로그아웃 최적화
 
+### 🎯 고객용 화면 구현 패턴
+```typescript
+// ✅ 네비게이션 연결 시 WebView 최적화 적용
+const handleNavigation = () => {
+  optimizeWebViewTransition();
+  navigate('/target-path');
+};
+
+// ✅ 카테고리 자동 선택 패턴
+const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+
+useEffect(() => {
+  if (categories.length > 0 && !selectedCategoryId) {
+    setSelectedCategoryId(categories[0].id);
+  }
+}, [categories, selectedCategoryId]);
+
+// ✅ 필터링된 데이터 계산
+const filteredItems = useMemo(() => {
+  if (!selectedCategoryId) return [];
+  return items.filter(item => item.categoryId === selectedCategoryId);
+}, [items, selectedCategoryId]);
+```
+
 ### 📁 WebView 헬퍼 사용법
 ```typescript
 import { optimizeWebViewTransition } from '@/utils/webviewHelper';
@@ -50,7 +74,22 @@ const handleNavigation = () => {
   </Grid>
 </Grid>
 
-// ✅ Box + CSS (더 권장됨)
+// ✅ Box + CSS Grid (더 권장됨)
+<Box sx={{ 
+  display: 'grid', 
+  gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+  gap: 2 
+}}>
+  <Card>내용</Card>
+</Box>
+
+// ✅ Tab 컴포넌트에서 불필요한 아이콘 제거
+<Tab
+  label={`${category.icon} ${category.name} (${count})`}
+  value={category.id}
+  // icon 속성 제거 - 이모지 아이콘이 이미 label에 포함됨
+/>
+```
 <Box sx={{ 
   display: 'grid', 
   gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', 
@@ -100,6 +139,13 @@ const useStoreStore = create<StoreState>((set, get) => ({
 - 모든 타입 명시적으로 정의
 - `any` 타입 사용 지양
 - 미사용 import 정리
+- **미사용 매개변수** `_event` 형태로 처리
+
+### UI/UX 최적화
+- **불필요한 아이콘 제거** - 이모지가 이미 있는 경우 추가 아이콘 지양
+- **카테고리 탭** - "전체" 옵션 대신 첫 번째 카테고리 자동 선택
+- **반응형 디자인** - Box + CSS Grid 사용으로 더 나은 성능
+- **일관된 네비게이션** - 뒤로가기 버튼으로 직관적인 UX
 
 ### ESLint
 - **에러 0개** 유지

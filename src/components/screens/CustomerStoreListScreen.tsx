@@ -245,9 +245,8 @@ const CustomerStoreListScreen: React.FC = () => {
 
     const handleStoreSelect = (store: Store) => {
         console.log('매장 선택:', store);
-        // TODO: 매장별 메뉴 화면으로 이동
-        // navigate(`/store/${store.id}/menu`);
-        alert(`${store.name} 매장이 선택되었습니다. 메뉴 화면 개발 예정!`);
+        optimizeWebViewTransition();
+        navigate(`/store/${store.id}/menu`);
     };
 
     const handleBack = () => {
