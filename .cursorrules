@@ -50,6 +50,39 @@ const filteredItems = useMemo(() => {
   if (!selectedCategoryId) return [];
   return items.filter(item => item.categoryId === selectedCategoryId);
 }, [items, selectedCategoryId]);
+
+// ✅ 슬라이드 기능 구현 패턴 (react-swipeable)
+import { useSwipeable } from 'react-swipeable';
+
+const handleSwipe = (direction: 'left' | 'right') => {
+  if (categories.length === 0) return;
+  
+  const currentIndex = categories.findIndex(cat => cat.id === selectedCategoryId);
+  if (currentIndex === -1) return;
+  
+  let newIndex: number;
+  
+  if (direction === 'left') {
+    // 오른쪽으로 슬라이드 (다음 카테고리)
+    newIndex = (currentIndex + 1) % categories.length;
+  } else {
+    // 왼쪽으로 슬라이드 (이전 카테고리)
+    newIndex = currentIndex === 0 ? categories.length - 1 : currentIndex - 1;
+  }
+  
+  setSelectedCategoryId(categories[newIndex].id);
+};
+
+const swipeHandlers = useSwipeable({
+  onSwipedLeft: () => handleSwipe('left'),
+  onSwipedRight: () => handleSwipe('right'),
+  preventScrollOnSwipe: true,
+  trackMouse: false,
+  delta: 50, // 최소 슬라이드 거리
+  swipeDuration: 500, // 슬라이드 지속 시간
+});
+
+// 사용법: <Box {...swipeHandlers} sx={{ touchAction: 'pan-y' }}>
 ```
 
 ### 📁 WebView 헬퍼 사용법
@@ -146,6 +179,8 @@ const useStoreStore = create<StoreState>((set, get) => ({
 - **카테고리 탭** - "전체" 옵션 대신 첫 번째 카테고리 자동 선택
 - **반응형 디자인** - Box + CSS Grid 사용으로 더 나은 성능
 - **일관된 네비게이션** - 뒤로가기 버튼으로 직관적인 UX
+- **다중 인터랙션** - 탭 클릭 + 슬라이드 동시 지원으로 사용성 향상
+- **슬라이드 최적화** - react-swipeable 라이브러리 사용, WebView 터치 이벤트 최적화
 
 ### ESLint
 - **에러 0개** 유지
@@ -216,9 +251,9 @@ window.debugAuth.fixTestAccounts()          // 테스트 계정 수정
 
 ## 🎯 Phase 4 개발 준비사항
 다음 단계인 고객용 시스템 개발을 위해:
-- 실시간 거리측정 기반 매장 찾기 (GPS 위치 활용)
+- 실시간 거리측정 기반 매장 찾기 (GPS 위치 활용) 
 - QR코드 스캔 기능 (보조 수단)
-- 고객용 메뉴 브라우징
+- 고객용 메뉴 브라우징 (슬라이드 기능 포함) ✅
 - 장바구니 시스템
 - 주문 처리 플로우
 

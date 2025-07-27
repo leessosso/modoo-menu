@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useSwipeable } from 'react-swipeable';
 import {
     Box,
     Card,
@@ -250,6 +251,36 @@ const CustomerMenuScreen: React.FC = () => {
         setSelectedCategoryId(newValue);
     };
 
+    // 슬라이드 핸들러
+    const handleSwipe = (direction: 'left' | 'right') => {
+        if (categories.length === 0) return;
+
+        const currentIndex = categories.findIndex(cat => cat.id === selectedCategoryId);
+        if (currentIndex === -1) return;
+
+        let newIndex: number;
+
+        if (direction === 'left') {
+            // 오른쪽으로 슬라이드 (다음 카테고리)
+            newIndex = (currentIndex + 1) % categories.length;
+        } else {
+            // 왼쪽으로 슬라이드 (이전 카테고리)
+            newIndex = currentIndex === 0 ? categories.length - 1 : currentIndex - 1;
+        }
+
+        setSelectedCategoryId(categories[newIndex].id);
+    };
+
+    // 슬라이드 이벤트 설정
+    const swipeHandlers = useSwipeable({
+        onSwipedLeft: () => handleSwipe('left'),
+        onSwipedRight: () => handleSwipe('right'),
+        preventScrollOnSwipe: true,
+        trackMouse: false,
+        delta: 50, // 최소 슬라이드 거리
+        swipeDuration: 500, // 슬라이드 지속 시간
+    });
+
     if (isLoading) {
         return <LoadingSpinner message="메뉴를 불러오는 중..." />;
     }
@@ -352,31 +383,40 @@ const CustomerMenuScreen: React.FC = () => {
                                 />
                             ))}
                         </Tabs>
+                        {categories.length > 1 && (
+                            <Box sx={{ px: 2, pb: 1 }}>
+                                <Typography variant="caption" color="text.secondary" sx={{ fontStyle: 'italic' }}>
+                                    💡 좌우로 슬라이드하여 카테고리를 변경할 수 있습니다
+                                </Typography>
+                            </Box>
+                        )}
                     </Paper>
                 )}
 
                 {/* 메뉴 목록 */}
-                {filteredMenuItems.length === 0 ? (
-                    <EmptyState
-                        icon={<MenuIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
-                        title="메뉴가 없습니다"
-                        description="이 카테고리에 등록된 메뉴가 없어요."
-                    />
-                ) : (
-                    <Box sx={{
-                        display: 'grid',
-                        gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
-                        gap: 2
-                    }}>
-                        {filteredMenuItems.map((menuItem) => (
-                            <MenuItemCard
-                                key={menuItem.id}
-                                menuItem={menuItem}
-                                onAddToCart={handleAddToCart}
-                            />
-                        ))}
-                    </Box>
-                )}
+                <Box {...swipeHandlers} sx={{ touchAction: 'pan-y' }}>
+                    {filteredMenuItems.length === 0 ? (
+                        <EmptyState
+                            icon={<MenuIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
+                            title="메뉴가 없습니다"
+                            description="이 카테고리에 등록된 메뉴가 없어요."
+                        />
+                    ) : (
+                        <Box sx={{
+                            display: 'grid',
+                            gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' },
+                            gap: 2
+                        }}>
+                            {filteredMenuItems.map((menuItem) => (
+                                <MenuItemCard
+                                    key={menuItem.id}
+                                    menuItem={menuItem}
+                                    onAddToCart={handleAddToCart}
+                                />
+                            ))}
+                        </Box>
+                    )}
+                </Box>
             </Container>
         </Box>
     );
