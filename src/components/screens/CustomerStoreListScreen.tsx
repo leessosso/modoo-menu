@@ -236,16 +236,28 @@ const CustomerStoreListScreen: React.FC = () => {
         });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // 거리가 포함된 매장 목록 계산
-    const storesWithDistance: StoreWithDistance[] = React.useMemo(() => {
-        if (!userLocation || !stores.length) return stores;
+    // 거리가 포함된 매장 목록 계산 (WebView 즉시 응답성을 위해 useMemo 제거)
+    console.log('🏪 CustomerStoreList - stores 상태:', { 
+        storesLength: stores.length, 
+        userLocation: userLocation ? 'available' : 'null',
+        stores: stores.map(s => ({ id: s.id, name: s.name }))
+    });
 
-        return stores.map((store): StoreWithDistance => ({
+    const storesWithDistance: StoreWithDistance[] = (() => {
+        if (!userLocation || !stores.length) {
+            console.log('🏪 CustomerStoreList - 조건 불충족:', { userLocation: !!userLocation, storesLength: stores.length });
+            return stores;
+        }
+
+        const result = stores.map((store): StoreWithDistance => ({
             ...store,
             // 테스트를 위해 임시로 랜덤 거리 생성 (실제로는 store.location 사용)
             distance: Math.round((Math.random() * 5 + 0.5) * 10) / 10,
         })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
-    }, [stores, userLocation]);
+
+        console.log('🏪 CustomerStoreList - storesWithDistance 계산 완료:', { count: result.length, stores: result.map(s => ({ name: s.name, distance: s.distance })) });
+        return result;
+    })();
 
     const handleStoreSelect = (store: Store) => {
         console.log('매장 선택:', store);

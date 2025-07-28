@@ -84,11 +84,20 @@ const DashboardScreen: React.FC = () => {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 가까운 매장 3개 계산
-  const nearbyStores = useMemo(() => {
-    if (!userLocation || !stores.length) return [];
+  // 가까운 매장 3개 계산 (WebView 즉시 응답성을 위해 useMemo 제거)
+  console.log('🏪 Dashboard - stores 상태:', { 
+    storesLength: stores.length, 
+    userLocation: userLocation ? 'available' : 'null',
+    stores: stores.map(s => ({ id: s.id, name: s.name }))
+  });
 
-    return stores
+  const nearbyStores = (() => {
+    if (!userLocation || !stores.length) {
+      console.log('🏪 Dashboard - 조건 불충족:', { userLocation: !!userLocation, storesLength: stores.length });
+      return [];
+    }
+
+    const result = stores
       .map((store) => ({
         ...store,
         // 테스트용 랜덤 거리 생성
@@ -96,7 +105,10 @@ const DashboardScreen: React.FC = () => {
       }))
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .slice(0, 3);
-  }, [stores, userLocation]);
+
+    console.log('🏪 Dashboard - nearbyStores 계산 완료:', { count: result.length, stores: result.map(s => ({ name: s.name, distance: s.distance })) });
+    return result;
+  })();
 
   // 매장 리스트로 이동
   const handleStoreListClick = () => {
