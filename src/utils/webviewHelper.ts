@@ -107,6 +107,46 @@ export const optimizeWebViewTransition = (callback?: () => void): void => {
 };
 
 /**
+ * WebView 환경에서 데이터 로딩을 최적화합니다.
+ * @param loadFunction 데이터를 로드하는 함수
+ * @param delay 지연 시간 (밀리초, 기본값: 100ms)
+ */
+export const optimizeWebViewDataLoading = (
+    loadFunction: () => void | Promise<void>, 
+    delay: number = 100
+): void => {
+    if (!isWebView()) {
+        // 일반 브라우저에서는 즉시 실행
+        if (typeof loadFunction === 'function') {
+            loadFunction();
+        }
+        return;
+    }
+
+    try {
+        // WebView에서는 초기 렌더링 완료 후 데이터 로딩
+        setTimeout(() => {
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    try {
+                        if (typeof loadFunction === 'function') {
+                            loadFunction();
+                        }
+                    } catch (error) {
+                        console.warn('WebView 데이터 로딩 실패 (무시됨):', error);
+                    }
+                });
+            });
+        }, delay);
+    } catch (error) {
+        console.warn('WebView 데이터 로딩 최적화 실패, 기본 로딩으로 대체:', error);
+        if (typeof loadFunction === 'function') {
+            loadFunction();
+        }
+    }
+};
+
+/**
  * WebView용 최적화된 로그아웃 처리
  * @param logoutCallback Firebase 로그아웃 함수
  * @returns Promise<void>

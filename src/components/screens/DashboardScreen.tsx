@@ -25,7 +25,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import DashboardHeader from '../common/DashboardHeader';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
-import { optimizeWebViewTransition } from '../../utils/webviewHelper';
+import { optimizeWebViewTransition, optimizeWebViewDataLoading } from '../../utils/webviewHelper';
 import type { Store } from '../../types/store';
 
 const DashboardScreen: React.FC = () => {
@@ -41,7 +41,7 @@ const DashboardScreen: React.FC = () => {
     optimizeWebViewTransition();
   }, []);
 
-  // 현재 위치 가져오기
+  // 현재 위치 가져오기 (WebView 최적화 적용)
   useEffect(() => {
     const getLocation = async () => {
       try {
@@ -72,12 +72,16 @@ const DashboardScreen: React.FC = () => {
       }
     };
 
-    getLocation();
+    optimizeWebViewDataLoading(() => {
+      getLocation();
+    }, 50); // 위치 정보는 더 빨리 로드
   }, []);
 
-  // 매장 목록 가져오기 (컴포넌트 마운트 시 한 번만 실행)
+  // 매장 목록 가져오기 (WebView 최적화 적용)
   useEffect(() => {
-    fetchAllStores();
+    optimizeWebViewDataLoading(() => {
+      fetchAllStores();
+    });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 가까운 매장 3개 계산

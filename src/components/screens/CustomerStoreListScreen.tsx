@@ -25,7 +25,7 @@ import {
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import { useStoreStore } from '../../stores/storeStore';
-import { optimizeWebViewTransition } from '../../utils/webviewHelper';
+import { optimizeWebViewTransition, optimizeWebViewDataLoading } from '../../utils/webviewHelper';
 import type { Store } from '../../types/store';
 
 // 거리 정보가 포함된 매장 타입
@@ -206,7 +206,7 @@ const CustomerStoreListScreen: React.FC = () => {
         optimizeWebViewTransition();
     }, []);
 
-    // 컴포넌트 마운트 시 현재 위치 가져오기
+    // 컴포넌트 마운트 시 현재 위치 가져오기 (WebView 최적화 적용)
     useEffect(() => {
         const getLocation = async () => {
             try {
@@ -224,12 +224,16 @@ const CustomerStoreListScreen: React.FC = () => {
             }
         };
 
-        getLocation();
+        optimizeWebViewDataLoading(() => {
+            getLocation();
+        }, 50); // 위치 정보는 더 빨리 로드
     }, []);
 
-    // 매장 목록 가져오기 (컴포넌트 마운트 시 한 번만 실행)
+    // 매장 목록 가져오기 (WebView 최적화 적용)
     useEffect(() => {
-        fetchAllStores();
+        optimizeWebViewDataLoading(() => {
+            fetchAllStores();
+        });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // 거리가 포함된 매장 목록 계산
