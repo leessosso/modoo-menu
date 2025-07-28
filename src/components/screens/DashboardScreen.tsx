@@ -75,10 +75,10 @@ const DashboardScreen: React.FC = () => {
     getLocation();
   }, []);
 
-  // 매장 목록 가져오기
+  // 매장 목록 가져오기 (컴포넌트 마운트 시 한 번만 실행)
   useEffect(() => {
     fetchAllStores();
-  }, [fetchAllStores]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 가까운 매장 3개 계산
   const nearbyStores = useMemo(() => {
