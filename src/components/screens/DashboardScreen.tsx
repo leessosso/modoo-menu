@@ -1,4 +1,4 @@
-import React, { useMemo, useEffect, useState } from 'react';
+import React, { useMemo, useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -188,6 +188,36 @@ const DashboardScreen: React.FC = () => {
     return user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-';
   }, [user?.createdAt]);
 
+  // 위치 권한 재설정 함수
+  const handleResetLocationPermission = useCallback(async () => {
+    try {
+      setIsLocationLoading(true);
+      setLocationError(null);
+
+      // 권한 상태 다시 확인
+      const status = await checkLocationPermission();
+      console.log('📍 권한 재확인:', status);
+
+      if (status === 'denied') {
+        setLocationError('위치 권한이 거부되었습니다. 브라우저 설정에서 권한을 허용해주세요.');
+        return;
+      }
+
+      // 위치 다시 가져오기 시도
+      const location = await getCurrentLocation();
+      setUserLocation(location);
+      setPermissionStatus('granted');
+      console.log('📍 위치 권한 재설정 성공:', location);
+
+    } catch (error) {
+      console.warn('위치 권한 재설정 실패:', error);
+      setLocationError('위치 권한을 다시 허용해주세요.');
+      setPermissionStatus('denied');
+    } finally {
+      setIsLocationLoading(false);
+    }
+  }, []);
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <DashboardHeader
@@ -234,6 +264,31 @@ const DashboardScreen: React.FC = () => {
               <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
                 현재 권한 상태: {permissionStatus === 'granted' ? '허용됨' : permissionStatus === 'denied' ? '거부됨' : '요청 대기 중'}
               </Typography>
+
+              {/* 권한 설정 가이드 */}
+              <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
+                <Typography variant="body2" fontWeight="bold" gutterBottom>
+                  📱 권한 설정 방법:
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  <strong>iOS:</strong> 설정 → Safari → 위치 서비스 → 이 웹사이트 → 허용
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
+                  <strong>Android:</strong> 설정 → 개인정보 보호 → 위치 → Chrome → 허용
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                  <strong>데스크톱:</strong> 주소창 🔒 아이콘 → 위치 → 허용
+                </Typography>
+              </Box>
+
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleResetLocationPermission}
+                sx={{ mt: UI_CONSTANTS.SPACING.SM }}
+              >
+                위치 권한 재설정
+              </Button>
             </Alert>
           )}
 

@@ -12,6 +12,7 @@ interface DebugAuth {
     addNearbyTestStores: () => Promise<void>;
     addRealLocationTestStores: () => Promise<void>;
     checkLocationPermissionStatus: () => Promise<void>;
+    forceResetLocationPermission: () => Promise<void>;
 }
 
 declare global {
@@ -365,6 +366,34 @@ const checkLocationPermissionStatus = async (): Promise<void> => {
     }
 };
 
+// 위치 권한 강제 재설정
+const forceResetLocationPermission = async (): Promise<void> => {
+    console.log('🔧 위치 권한 강제 재설정 중...');
+
+    try {
+        const { getCurrentLocation, checkLocationPermission } = await import('./locationHelper');
+
+        // 1. 현재 권한 상태 확인
+        const currentStatus = await checkLocationPermission();
+        console.log('📍 현재 권한 상태:', currentStatus);
+
+        // 2. 위치 권한 강제 요청
+        console.log('📍 위치 권한 요청 중...');
+        const location = await getCurrentLocation();
+
+        console.log('✅ 위치 권한 재설정 성공!');
+        console.log('📍 현재 위치:', location);
+
+        // 3. 페이지 새로고침으로 상태 업데이트
+        console.log('🔄 페이지를 새로고침합니다...');
+        setTimeout(() => window.location.reload(), 1000);
+
+    } catch (error) {
+        console.error('❌ 위치 권한 재설정 실패:', error);
+        console.log('💡 브라우저 설정에서 위치 권한을 수동으로 허용해주세요.');
+    }
+};
+
 // 개발자 도구 초기화
 const initializeDevTools = (): void => {
     if (typeof window !== 'undefined') {
@@ -379,6 +408,7 @@ const initializeDevTools = (): void => {
             addNearbyTestStores,
             addRealLocationTestStores,
             checkLocationPermissionStatus,
+            forceResetLocationPermission,
         };
     }
 };
