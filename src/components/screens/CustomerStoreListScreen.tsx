@@ -125,7 +125,7 @@ const CustomerStoreListScreen: React.FC = () => {
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppHeader title="🏪 매장 목록" onBackClick={handleBackClick} />
 
-            <Box sx={{ p: 2 }}>
+            <Box sx={{ pt: 8, p: 2 }}>
                 {/* 위치 정보 */}
                 {userLocation && (
                     <Card sx={{ mb: 3, bgcolor: 'primary.50' }}>

@@ -283,7 +283,7 @@ const StoreRegisterScreen: React.FC = () => {
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       <AppHeader title="🏪 새 매장 등록" onBackClick={() => navigate('/store-dashboard')} />
 
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ pt: 8, p: 2 }}>
         <Paper sx={{ p: UI_CONSTANTS.SPACING.LG }}>
           <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
             매장 정보를 입력하여 새로운 매장을 등록하세요

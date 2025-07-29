@@ -153,176 +153,178 @@ const StoreOwnerDashboard: React.FC = () => {
       />
 
       {/* 메인 콘텐츠 */}
-      <Container maxWidth="lg" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
-        {/* 환영 메시지 */}
-        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG, textAlign: 'center' }}>
-          <Typography variant="h5" component="h2" gutterBottom color="primary">
-            안녕하세요, {user?.name}님! 🏪
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            오늘도 매장을 성공적으로 운영해보세요.
-          </Typography>
-        </Paper>
-
-        {/* 매장 목록 */}
-        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: UI_CONSTANTS.SPACING.MD }}>
-            <Typography variant="h6">
-              내 매장 ({stores.length})
+      <Box sx={{ pt: 8 }}>
+        <Container maxWidth="lg" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
+          {/* 환영 메시지 */}
+          <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG, textAlign: 'center' }}>
+            <Typography variant="h5" component="h2" gutterBottom color="primary">
+              안녕하세요, {user?.name}님! 🏪
             </Typography>
-            <Button
-              variant="outlined"
-              size="small"
-              onClick={handleStoresList}
-              startIcon={<Edit />}
-            >
-              전체 보기
-            </Button>
-          </Box>
-          <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
+            <Typography variant="body1" color="text.secondary">
+              오늘도 매장을 성공적으로 운영해보세요.
+            </Typography>
+          </Paper>
 
-          {stores.length === 0 ? (
-            <EmptyState
-              icon="🏪"
-              title="등록된 매장이 없습니다"
-              description="첫 번째 매장을 등록하여 시작해보세요"
-              actionLabel="매장 등록하기"
-              onAction={handleAddStore}
-            />
-          ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.TABLET, gap: UI_CONSTANTS.SPACING.MD }}>
-              {displayStores.map((store) => (
-                <Card key={store.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-                  <CardContent sx={{ flexGrow: 1 }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: UI_CONSTANTS.SPACING.SM }}>
-                      <Typography variant="h6" component="h3">
-                        {store.name}
+          {/* 매장 목록 */}
+          <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: UI_CONSTANTS.SPACING.MD }}>
+              <Typography variant="h6">
+                내 매장 ({stores.length})
+              </Typography>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={handleStoresList}
+                startIcon={<Edit />}
+              >
+                전체 보기
+              </Button>
+            </Box>
+            <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
+
+            {stores.length === 0 ? (
+              <EmptyState
+                icon="🏪"
+                title="등록된 매장이 없습니다"
+                description="첫 번째 매장을 등록하여 시작해보세요"
+                actionLabel="매장 등록하기"
+                onAction={handleAddStore}
+              />
+            ) : (
+              <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.TABLET, gap: UI_CONSTANTS.SPACING.MD }}>
+                {displayStores.map((store) => (
+                  <Card key={store.id} sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                    <CardContent sx={{ flexGrow: 1 }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: UI_CONSTANTS.SPACING.SM }}>
+                        <Typography variant="h6" component="h3">
+                          {store.name}
+                        </Typography>
+                        <Chip
+                          label={store.isOpen ? '운영중' : '휴무'}
+                          color={store.isOpen ? 'success' : 'default'}
+                          size="small"
+                        />
+                      </Box>
+                      <Typography variant="body2" color="text.secondary" gutterBottom>
+                        {store.description}
                       </Typography>
-                      <Chip
-                        label={store.isOpen ? '운영중' : '휴무'}
-                        color={store.isOpen ? 'success' : 'default'}
-                        size="small"
-                      />
-                    </Box>
-                    <Typography variant="body2" color="text.secondary" gutterBottom>
-                      {store.description}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      📍 {store.address}
-                    </Typography>
-                  </CardContent>
-                  <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        📍 {store.address}
+                      </Typography>
+                    </CardContent>
+                    <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
+                      <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          startIcon={<MenuBook />}
+                          onClick={() => handleStoreCategoryManage(store)}
+                          color="secondary"
+                        >
+                          카테고리
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          startIcon={<Receipt />}
+                          onClick={() => handleStoreMenuManage(store)}
+                          sx={{
+                            background: 'linear-gradient(45deg, #FF6B35 30%, #F7931E 90%)',
+                          }}
+                        >
+                          메뉴 관리
+                        </Button>
+                      </Box>
                       <Button
                         size="small"
-                        variant="outlined"
-                        startIcon={<MenuBook />}
-                        onClick={() => handleStoreCategoryManage(store)}
-                        color="secondary"
-                      >
-                        카테고리
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        startIcon={<Receipt />}
-                        onClick={() => handleStoreMenuManage(store)}
-                        sx={{
-                          background: 'linear-gradient(45deg, #FF6B35 30%, #F7931E 90%)',
+                        startIcon={<Edit />}
+                        color="inherit"
+                        onClick={() => {
+                          optimizeWebViewTransition(() => {
+                            navigate(`/store-edit/${store.id}`);
+                          });
                         }}
                       >
-                        메뉴 관리
+                        수정
                       </Button>
+                    </CardActions>
+                  </Card>
+                ))}
+              </Box>
+            )}
+          </Paper>
+
+          {/* 빠른 액션 */}
+          <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG }}>
+            <Typography variant="h6" gutterBottom>
+              빠른 액션
+            </Typography>
+            <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.DESKTOP_4COL, gap: UI_CONSTANTS.SPACING.MD }}>
+              {menuItems.map((item, index) => (
+                <Card
+                  key={index}
+                  sx={{
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 2,
+                    },
+                  }}
+                  onClick={item.onClick}
+                >
+                  <CardContent sx={{ textAlign: 'center', p: UI_CONSTANTS.SPACING.MD }}>
+                    <Box sx={{ mb: UI_CONSTANTS.SPACING.SM }}>
+                      {item.icon}
                     </Box>
-                    <Button
-                      size="small"
-                      startIcon={<Edit />}
-                      color="inherit"
-                      onClick={() => {
-                        optimizeWebViewTransition(() => {
-                          navigate(`/store-edit/${store.id}`);
-                        });
-                      }}
-                    >
-                      수정
-                    </Button>
-                  </CardActions>
+                    <Typography variant="subtitle1" component="h3" gutterBottom>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {item.description}
+                    </Typography>
+                  </CardContent>
                 </Card>
               ))}
             </Box>
-          )}
-        </Paper>
+          </Paper>
 
-        {/* 빠른 액션 */}
-        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG }}>
-          <Typography variant="h6" gutterBottom>
-            빠른 액션
-          </Typography>
-          <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.DESKTOP_4COL, gap: UI_CONSTANTS.SPACING.MD }}>
-            {menuItems.map((item, index) => (
-              <Card
-                key={index}
-                sx={{
-                  cursor: 'pointer',
-                  transition: 'all 0.3s ease',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: 2,
-                  },
-                }}
-                onClick={item.onClick}
-              >
-                <CardContent sx={{ textAlign: 'center', p: UI_CONSTANTS.SPACING.MD }}>
-                  <Box sx={{ mb: UI_CONSTANTS.SPACING.SM }}>
-                    {item.icon}
-                  </Box>
-                  <Typography variant="subtitle1" component="h3" gutterBottom>
-                    {item.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {item.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))}
-          </Box>
-        </Paper>
-
-        {/* 통계 요약 */}
-        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG }}>
-          <Typography variant="h6" gutterBottom>
-            오늘의 요약
-          </Typography>
-          <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
-          <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.DESKTOP, gap: UI_CONSTANTS.SPACING.MD }}>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="primary.main">
-                0
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                오늘 주문
-              </Typography>
+          {/* 통계 요약 */}
+          <Paper sx={{ p: UI_CONSTANTS.SPACING.LG }}>
+            <Typography variant="h6" gutterBottom>
+              오늘의 요약
+            </Typography>
+            <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
+            <Box sx={{ display: 'grid', gridTemplateColumns: UI_CONSTANTS.GRID_BREAKPOINTS.DESKTOP, gap: UI_CONSTANTS.SPACING.MD }}>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" color="primary.main">
+                  0
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  오늘 주문
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" color="success.main">
+                  ₩0
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  오늘 매출
+                </Typography>
+              </Box>
+              <Box sx={{ textAlign: 'center' }}>
+                <Typography variant="h4" color="info.main">
+                  {stores.length}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  운영 매장
+                </Typography>
+              </Box>
             </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="success.main">
-                ₩0
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                오늘 매출
-              </Typography>
-            </Box>
-            <Box sx={{ textAlign: 'center' }}>
-              <Typography variant="h4" color="info.main">
-                {stores.length}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                운영 매장
-              </Typography>
-            </Box>
-          </Box>
-        </Paper>
-      </Container>
+          </Paper>
+        </Container>
+      </Box>
     </Box>
   );
 };

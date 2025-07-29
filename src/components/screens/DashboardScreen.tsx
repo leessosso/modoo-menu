@@ -193,7 +193,7 @@ const DashboardScreen: React.FC = () => {
         maxWidth="md"
       />
 
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ pt: 8, p: 2 }}>
         {/* 환영 메시지 */}
         <Box sx={{ textAlign: 'center', mb: 3 }}>
           <Typography variant="h6" gutterBottom>

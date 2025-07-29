@@ -5,13 +5,15 @@ import {
     Typography,
     Avatar,
     IconButton,
-    Button
+    Button,
+    AppBar,
+    Toolbar
 } from '@mui/material';
 import {
     Person
 } from '@mui/icons-material';
 
-import { UI_CONSTANTS } from '../../constants';
+
 import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 import { useNavigate } from 'react-router-dom';
 
@@ -40,54 +42,72 @@ const AppHeader: React.FC<AppHeaderProps> = ({
     };
 
     return (
-        <Box
+        <AppBar
+            position="fixed"
             sx={{
+                zIndex: (theme) => theme.zIndex.drawer + 1,
                 bgcolor: 'primary.main',
-                color: 'white',
-                py: UI_CONSTANTS.SPACING.MD,
             }}
         >
             <Container maxWidth={maxWidth}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                        {onBackClick && (
-                            <Button
-                                variant="text"
-                                onClick={onBackClick}
+                <Toolbar sx={{ minHeight: '56px', py: 0.5 }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            {onBackClick && (
+                                <Button
+                                    variant="text"
+                                    onClick={onBackClick}
+                                    sx={{
+                                        color: 'white',
+                                        minWidth: 'auto',
+                                        px: 1,
+                                        py: 0.5,
+                                        fontSize: '0.875rem',
+                                        '&:hover': {
+                                            bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                        }
+                                    }}
+                                >
+                                    ← 뒤로
+                                </Button>
+                            )}
+                            <Typography
+                                variant="h6"
+                                component="h1"
+                                sx={{
+                                    fontWeight: 600,
+                                    fontSize: { xs: '1rem', sm: '1.125rem' }
+                                }}
+                            >
+                                {icon} {title}
+                            </Typography>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                            <IconButton
+                                onClick={handleUserMenuClick}
                                 sx={{
                                     color: 'white',
-                                    minWidth: 'auto',
-                                    px: 1,
+                                    p: 0.5,
                                     '&:hover': {
                                         bgcolor: 'rgba(255, 255, 255, 0.1)',
                                     }
                                 }}
                             >
-                                ← 뒤로
-                            </Button>
-                        )}
-                        <Typography variant="h4" component="h1">
-                            {icon} {title}
-                        </Typography>
+                                <Avatar
+                                    sx={{
+                                        width: 32,
+                                        height: 32,
+                                        fontSize: '0.875rem'
+                                    }}
+                                >
+                                    <Person />
+                                </Avatar>
+                            </IconButton>
+                        </Box>
                     </Box>
-                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton
-                            onClick={handleUserMenuClick}
-                            sx={{
-                                color: 'white',
-                                '&:hover': {
-                                    bgcolor: 'rgba(255, 255, 255, 0.1)',
-                                }
-                            }}
-                        >
-                            <Avatar sx={UI_CONSTANTS.AVATAR_SIZES.MEDIUM}>
-                                <Person />
-                            </Avatar>
-                        </IconButton>
-                    </Box>
-                </Box>
+                </Toolbar>
             </Container>
-        </Box>
+        </AppBar>
     );
 };
 
