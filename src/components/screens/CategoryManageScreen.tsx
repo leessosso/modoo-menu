@@ -189,7 +189,7 @@ const CategoryManageScreen: React.FC = () => {
         return (
             <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
                 <AppHeader title="카테고리 관리" />
-                <Box sx={{ pt: 8, p: 3 }}>
+                <Box sx={{ p: 3 }}>
                     <EmptyState
                         icon={<CategoryIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
                         title="등록된 매장이 없습니다"
@@ -220,7 +220,7 @@ const CategoryManageScreen: React.FC = () => {
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppHeader title="카테고리 관리" />
 
-            <Box sx={{ pt: 8, p: 3 }}>
+            <Box sx={{ p: 3 }}>
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}

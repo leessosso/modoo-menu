@@ -342,7 +342,7 @@ const CustomerMenuScreen: React.FC = () => {
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppHeader title={currentStore.name} onBackClick={handleBack} />
 
-            <Box sx={{ pt: 8, p: 2 }}>
+            <Box sx={{ p: 2 }}>
                 {/* 매장 정보 */}
                 <StoreInfoCard store={currentStore} />
 

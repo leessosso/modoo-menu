@@ -257,7 +257,7 @@ const MenuManageScreen: React.FC = () => {
         return (
             <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
                 <AppHeader title="메뉴 관리" />
-                <Box sx={{ pt: 8, p: 3 }}>
+                <Box sx={{ p: 3 }}>
                     <EmptyState
                         icon={<MenuIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
                         title="등록된 매장이 없습니다"
@@ -278,7 +278,7 @@ const MenuManageScreen: React.FC = () => {
         return (
             <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
                 <AppHeader title="메뉴 관리" />
-                <Box sx={{ pt: 8, p: 3 }}>
+                <Box sx={{ p: 3 }}>
                     <Alert severity="warning">
                         매장을 선택해주세요.
                     </Alert>
@@ -291,7 +291,7 @@ const MenuManageScreen: React.FC = () => {
         return (
             <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
                 <AppHeader title="메뉴 관리" />
-                <Box sx={{ pt: 8, p: 3 }}>
+                <Box sx={{ p: 3 }}>
                     <EmptyState
                         icon={<CategoryIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
                         title="카테고리가 없습니다"
@@ -308,7 +308,7 @@ const MenuManageScreen: React.FC = () => {
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
             <AppHeader title="메뉴 관리" />
 
-            <Box sx={{ pt: 8, p: 3 }}>
+            <Box sx={{ p: 3 }}>
 
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>

@@ -43,10 +43,11 @@ const AppHeader: React.FC<AppHeaderProps> = ({
 
     return (
         <AppBar
-            position="fixed"
+            position="sticky"
             sx={{
-                zIndex: (theme) => theme.zIndex.drawer + 1,
+                top: 0,
                 bgcolor: 'primary.main',
+                boxShadow: 1,
             }}
         >
             <Container maxWidth={maxWidth}>
