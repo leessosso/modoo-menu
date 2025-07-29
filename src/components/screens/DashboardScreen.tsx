@@ -26,7 +26,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import DashboardHeader from '../common/DashboardHeader';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
-import { getCurrentLocation, calculateDistance, formatDistance } from '../../utils/locationHelper';
+import { getCurrentLocation, calculateDistance, formatDistance, checkLocationPermission } from '../../utils/locationHelper';
 import { optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
 import type { Store, StoreWithDistance, Location } from '../../types/store';
 
@@ -39,10 +39,21 @@ const DashboardScreen: React.FC = () => {
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [nearbyStoresReady, setNearbyStoresReady] = useState(false);
   const [locationError, setLocationError] = useState<string | null>(null);
+  const [permissionStatus, setPermissionStatus] = useState<'granted' | 'denied' | 'prompt'>('prompt');
 
   // WebView 렌더링 최적화
   useEffect(() => {
     optimizeWebViewTransition();
+  }, []);
+
+  // 위치 권한 상태 확인
+  useEffect(() => {
+    const checkPermission = async () => {
+      const status = await checkLocationPermission();
+      setPermissionStatus(status);
+      console.log('📍 위치 권한 상태:', status);
+    };
+    checkPermission();
   }, []);
 
   // 현재 위치 가져오기
@@ -52,10 +63,12 @@ const DashboardScreen: React.FC = () => {
         setIsLocationLoading(true);
         const location = await getCurrentLocation();
         setUserLocation(location);
+        setPermissionStatus('granted');
         console.log('📍 실제 GPS 위치 설정됨:', location);
       } catch (error) {
         console.warn('위치 가져오기 실패:', error);
         setLocationError('위치 권한이 필요합니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
+        setPermissionStatus('denied');
         // 실제 GPS 실패 시 기본 위치 사용하지 않음
         setUserLocation(null);
       } finally {
@@ -217,6 +230,9 @@ const DashboardScreen: React.FC = () => {
               </Typography>
               <Typography variant="body2" color="text.secondary">
                 가까운 매장을 찾으려면 브라우저 설정에서 위치 권한을 허용해주세요.
+              </Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                현재 권한 상태: {permissionStatus === 'granted' ? '허용됨' : permissionStatus === 'denied' ? '거부됨' : '요청 대기 중'}
               </Typography>
             </Alert>
           )}

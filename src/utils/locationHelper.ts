@@ -169,6 +169,33 @@ export const sortStoresByDistance = (
 };
 
 /**
+ * 위치 권한 상태를 확인하는 함수
+ * @returns Promise<'granted' | 'denied' | 'prompt'>
+ */
+export const checkLocationPermission = (): Promise<'granted' | 'denied' | 'prompt'> => {
+    return new Promise((resolve) => {
+        if (!navigator.permissions) {
+            // permissions API가 지원되지 않는 경우
+            resolve('prompt');
+            return;
+        }
+
+        navigator.permissions.query({ name: 'geolocation' as PermissionName })
+            .then((permissionStatus) => {
+                resolve(permissionStatus.state);
+
+                // 권한 상태 변경 감지
+                permissionStatus.onchange = () => {
+                    console.log('위치 권한 상태 변경:', permissionStatus.state);
+                };
+            })
+            .catch(() => {
+                resolve('prompt');
+            });
+    });
+};
+
+/**
  * 위치 권한을 요청하는 함수
  * @returns Promise<boolean>
  */

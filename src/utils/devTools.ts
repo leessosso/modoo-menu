@@ -11,6 +11,7 @@ interface DebugAuth {
     updateExistingStoresLocation: () => Promise<void>;
     addNearbyTestStores: () => Promise<void>;
     addRealLocationTestStores: () => Promise<void>;
+    checkLocationPermissionStatus: () => Promise<void>;
 }
 
 declare global {
@@ -337,6 +338,33 @@ const updateExistingStoresLocation = async (): Promise<void> => {
     }
 };
 
+// 위치 권한 상태 확인
+const checkLocationPermissionStatus = async (): Promise<void> => {
+    console.log('🔍 위치 권한 상태 확인 중...');
+
+    try {
+        const { checkLocationPermission, getCurrentLocation } = await import('./locationHelper');
+
+        const permissionStatus = await checkLocationPermission();
+        console.log('📍 위치 권한 상태:', permissionStatus);
+
+        if (permissionStatus === 'granted') {
+            try {
+                const location = await getCurrentLocation();
+                console.log('✅ 위치 권한 허용됨, 현재 위치:', location);
+            } catch (error) {
+                console.error('❌ 위치 가져오기 실패:', error);
+            }
+        } else if (permissionStatus === 'denied') {
+            console.warn('⚠️ 위치 권한이 거부됨');
+        } else {
+            console.log('⏳ 위치 권한 요청 대기 중');
+        }
+    } catch (error) {
+        console.error('❌ 위치 권한 확인 실패:', error);
+    }
+};
+
 // 개발자 도구 초기화
 const initializeDevTools = (): void => {
     if (typeof window !== 'undefined') {
@@ -350,6 +378,7 @@ const initializeDevTools = (): void => {
             updateExistingStoresLocation,
             addNearbyTestStores,
             addRealLocationTestStores,
+            checkLocationPermissionStatus,
         };
     }
 };
