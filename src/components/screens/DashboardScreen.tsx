@@ -25,15 +25,16 @@ import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import DashboardHeader from '../common/DashboardHeader';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
+import { getCurrentLocation, calculateDistance, formatDistance } from '../../utils/locationHelper';
 import { optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
-import type { Store } from '../../types/store';
+import type { Store, StoreWithDistance, Location } from '../../types/store';
 
 const DashboardScreen: React.FC = () => {
   const { user } = useAuthStore();
   const { stores, fetchAllStores } = useStoreStore();
   const navigate = useNavigate();
 
-  const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+  const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [nearbyStoresReady, setNearbyStoresReady] = useState(false);
 
@@ -47,27 +48,12 @@ const DashboardScreen: React.FC = () => {
     const getLocation = async () => {
       try {
         setIsLocationLoading(true);
-        if (navigator.geolocation) {
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              setUserLocation({
-                lat: position.coords.latitude,
-                lon: position.coords.longitude,
-              });
-              setIsLocationLoading(false);
-            },
-            () => {
-              setUserLocation({ lat: 37.5665, lon: 126.9780 });
-              setIsLocationLoading(false);
-            },
-            { timeout: 10000 }
-          );
-        } else {
-          setUserLocation({ lat: 37.5665, lon: 126.9780 });
-          setIsLocationLoading(false);
-        }
+        const location = await getCurrentLocation();
+        setUserLocation(location);
       } catch (error) {
-        setUserLocation({ lat: 37.5665, lon: 126.9780 });
+        console.warn('위치 가져오기 실패:', error);
+        setUserLocation({ latitude: 37.5665, longitude: 126.9780 });
+      } finally {
         setIsLocationLoading(false);
       }
     };
@@ -84,19 +70,36 @@ const DashboardScreen: React.FC = () => {
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 가까운 매장 3개 계산
-  const nearbyStores = (() => {
+  // 가까운 매장 3개 계산 (실제 거리 계산 사용)
+  const nearbyStores: StoreWithDistance[] = (() => {
     if (!userLocation || !stores.length) {
       return [];
     }
 
-    return stores
-      .map((store) => ({
+    // 위치 정보가 있는 매장들만 필터링하고 거리 계산
+    const storesWithLocation = stores.filter(store =>
+      store.latitude && store.longitude
+    );
+
+    if (storesWithLocation.length === 0) {
+      return [];
+    }
+
+    // 실제 거리 계산
+    const result = storesWithLocation
+      .map((store): StoreWithDistance => ({
         ...store,
-        distance: Math.round((Math.random() * 5 + 0.5) * 10) / 10,
+        distance: calculateDistance(
+          userLocation.latitude,
+          userLocation.longitude,
+          store.latitude!,
+          store.longitude!
+        ),
       }))
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .slice(0, 3);
+
+    return result;
   })();
 
   // 매장 리스트 렌더링 최적화
@@ -257,7 +260,7 @@ const DashboardScreen: React.FC = () => {
                         />
                         <Chip
                           size="small"
-                          label={`${store.distance}km`}
+                          label={formatDistance(store.distance || 0)}
                           variant="outlined"
                           color="primary"
                         />

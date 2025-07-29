@@ -25,40 +25,9 @@ import {
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import { useStoreStore } from '../../stores/storeStore';
+import { getCurrentLocation, calculateDistance, formatDistance } from '../../utils/locationHelper';
 import { optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
-import type { Store } from '../../types/store';
-
-// 거리 정보가 포함된 매장 타입
-interface StoreWithDistance extends Store {
-    distance?: number;
-}
-
-// 현재 위치 가져오기 함수
-const getCurrentLocation = (): Promise<{ lat: number; lon: number }> => {
-    return new Promise((resolve, reject) => {
-        if (!navigator.geolocation) {
-            reject(new Error('위치 서비스가 지원되지 않습니다.'));
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            (position) => {
-                resolve({
-                    lat: position.coords.latitude,
-                    lon: position.coords.longitude,
-                });
-            },
-            (error) => {
-                console.warn('위치 가져오기 실패:', error);
-                resolve({ lat: 37.5665, lon: 126.9780 });
-            },
-            {
-                timeout: 10000,
-                maximumAge: 5 * 60 * 1000,
-            }
-        );
-    });
-};
+import type { Store, StoreWithDistance, Location } from '../../types/store';
 
 // 매장 카드 컴포넌트
 interface StoreCardProps {
@@ -105,7 +74,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, onSelect }) => {
                         {store.distance && (
                             <Chip
                                 size="small"
-                                label={`${store.distance}km`}
+                                label={formatDistance(store.distance)}
                                 variant="outlined"
                                 color="primary"
                             />
@@ -173,7 +142,7 @@ const CustomerStoreListScreen: React.FC = () => {
     const navigate = useNavigate();
     const { stores, isLoading, error, fetchAllStores } = useStoreStore();
 
-    const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
+    const [userLocation, setUserLocation] = useState<Location | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [isLocationLoading, setIsLocationLoading] = useState(true);
     const [storeListReady, setStoreListReady] = useState(false);
@@ -193,7 +162,8 @@ const CustomerStoreListScreen: React.FC = () => {
                 setLocationError(null);
             } catch (error: any) {
                 setLocationError(error.message);
-                setUserLocation({ lat: 37.5665, lon: 126.9780 });
+                console.warn('위치 가져오기 실패, 테스트 모드로 진행:', error);
+                setUserLocation({ latitude: 37.5665, longitude: 126.9780 });
             } finally {
                 setIsLocationLoading(false);
             }
@@ -211,17 +181,39 @@ const CustomerStoreListScreen: React.FC = () => {
         });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // 거리가 포함된 매장 목록 계산
+    // 거리가 포함된 매장 목록 계산 (실제 거리 계산 사용)
     const storesWithDistance: StoreWithDistance[] = (() => {
         if (!userLocation || !stores.length) {
             return stores;
         }
 
-        return stores.map((store): StoreWithDistance => ({
+        // 위치 정보가 있는 매장들만 필터링하고 거리 계산
+        const storesWithLocation = stores.filter(store =>
+            store.latitude && store.longitude
+        );
+
+        if (storesWithLocation.length === 0) {
+            return stores;
+        }
+
+        // 실제 거리 계산
+        const result = storesWithLocation.map((store): StoreWithDistance => ({
             ...store,
-            distance: Math.round((Math.random() * 5 + 0.5) * 10) / 10,
+            distance: calculateDistance(
+                userLocation.latitude,
+                userLocation.longitude,
+                store.latitude!,
+                store.longitude!
+            ),
         })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
+
+        return result;
     })();
+
+    // 위치 정보가 없는 매장 수 계산
+    const storesWithoutLocation = stores.filter(store =>
+        !store.latitude || !store.longitude
+    ).length;
 
     // 매장 리스트 렌더링 최적화
     useEffect(() => {
@@ -280,6 +272,14 @@ const CustomerStoreListScreen: React.FC = () => {
                                     현재 위치에서 가까운 순으로 표시됩니다
                                 </Typography>
                             </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                위치: {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
+                            </Typography>
+                            {storesWithoutLocation > 0 && (
+                                <Alert severity="info" sx={{ mt: 1 }}>
+                                    📍 위치 정보가 없는 매장 {storesWithoutLocation}개가 거리순 정렬에서 제외됩니다
+                                </Alert>
+                            )}
                         </CardContent>
                     </Card>
                 )}

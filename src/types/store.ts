@@ -11,6 +11,26 @@ export interface Store {
     ownerId: string; // 매장관리자 ID
     createdAt: Date;
     updatedAt: Date;
+    // 위치 정보 추가
+    latitude?: number;
+    longitude?: number;
+}
+
+// 위치 정보 타입
+export interface Location {
+    latitude: number;
+    longitude: number;
+}
+
+// 거리 정보가 포함된 매장 타입
+export interface StoreWithDistance extends Store {
+    distance?: number;
+}
+
+// 거리 계산 결과 타입
+export interface DistanceResult {
+    distance: number; // km 단위
+    duration?: number; // 예상 이동 시간 (분)
 }
 
 export interface Category {
@@ -52,6 +72,8 @@ export interface CreateStoreData {
     address: string;
     phone: string;
     businessHours: string;
+    latitude?: number;
+    longitude?: number;
 }
 
 export interface UpdateStoreData extends Partial<CreateStoreData> {

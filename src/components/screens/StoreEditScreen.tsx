@@ -12,10 +12,14 @@ import {
     Step,
     StepLabel,
 } from '@mui/material';
+import {
+    MyLocation as MyLocationIcon,
+} from '@mui/icons-material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
-import type { UpdateStoreData } from '../../types/store';
+import { getCurrentLocation, geocodeAddress } from '../../utils/locationHelper';
+import type { UpdateStoreData, Location } from '../../types/store';
 import { UI_CONSTANTS, STEPPER_STEPS } from '../../constants';
 
 
@@ -40,6 +44,9 @@ const StoreEditScreen: React.FC = () => {
         phone: '',
         businessHours: '',
     });
+    const [currentLocation, setCurrentLocation] = useState<Location | null>(null);
+    const [isLocationLoading, setIsLocationLoading] = useState(false);
+    const [locationError, setLocationError] = useState<string | null>(null);
 
     // 매장 정보 불러오기
     useEffect(() => {
@@ -51,15 +58,40 @@ const StoreEditScreen: React.FC = () => {
     // 현재 매장 정보로 폼 초기화
     useEffect(() => {
         if (currentStore) {
-            setStoreData({
+            const updateData: UpdateStoreData = {
                 name: currentStore.name,
                 description: currentStore.description,
                 address: currentStore.address,
                 phone: currentStore.phone,
                 businessHours: currentStore.businessHours,
-            });
+            };
+
+            if (currentStore.latitude !== undefined) {
+                updateData.latitude = currentStore.latitude;
+            }
+            if (currentStore.longitude !== undefined) {
+                updateData.longitude = currentStore.longitude;
+            }
+
+            setStoreData(updateData);
         }
     }, [currentStore]);
+
+    // 주소를 좌표로 변환
+    const handleGeocodeAddress = useCallback(async (address: string) => {
+        if (!address.trim()) return;
+
+        try {
+            const location = await geocodeAddress(address);
+            setStoreData(prev => ({
+                ...prev,
+                latitude: location.latitude,
+                longitude: location.longitude,
+            }));
+        } catch (error) {
+            console.warn('주소 변환 실패:', error);
+        }
+    }, []);
 
     const handleSubmit = useCallback(async () => {
         if (!storeId || !user) {
@@ -68,20 +100,61 @@ const StoreEditScreen: React.FC = () => {
 
         try {
             clearError();
+
+            // 주소가 있으면 좌표로 변환
+            if (storeData.address && !storeData.latitude && !storeData.longitude) {
+                await handleGeocodeAddress(storeData.address);
+            }
+
             await updateStore(storeId, storeData);
             navigate('/store-dashboard');
         } catch (error) {
             console.error('매장 수정 실패:', error);
         }
-    }, [storeId, storeData, user, updateStore, clearError, navigate]);
+    }, [storeId, storeData, user, updateStore, clearError, navigate, handleGeocodeAddress]);
+
+    // 현재 위치 가져오기
+    const handleGetCurrentLocation = useCallback(async () => {
+        try {
+            setIsLocationLoading(true);
+            setLocationError(null);
+
+            const location = await getCurrentLocation();
+            setCurrentLocation(location);
+
+            // 현재 위치를 기반으로 주소 자동 설정 (테스트용)
+            const testAddress = `서울특별시 강남구 테헤란로 123 (현재 위치 기반)`;
+            setStoreData(prev => ({
+                ...prev,
+                address: testAddress,
+                latitude: location.latitude,
+                longitude: location.longitude,
+            }));
+
+        } catch (error: any) {
+            setLocationError(error.message);
+            console.warn('위치 가져오기 실패:', error);
+        } finally {
+            setIsLocationLoading(false);
+        }
+    }, []);
 
     const handleChange = useCallback((field: keyof UpdateStoreData) => (
         e: React.ChangeEvent<HTMLInputElement>
     ) => {
+        const value = e.target.value;
         setStoreData(prev => ({
             ...prev,
-            [field]: e.target.value,
+            [field]: value,
         }));
+
+        // 주소가 변경되면 좌표 초기화
+        if (field === 'address') {
+            setStoreData(prev => {
+                const { latitude, longitude, ...rest } = prev;
+                return rest;
+            });
+        }
     }, []);
 
     const handleNext = useCallback(() => {
@@ -131,6 +204,36 @@ const StoreEditScreen: React.FC = () => {
             case 1:
                 return (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: UI_CONSTANTS.SPACING.MD }}>
+                        {/* 위치 정보 섹션 */}
+                        <Box sx={{ mb: 2 }}>
+                            <Typography variant="h6" gutterBottom>
+                                📍 위치 정보
+                            </Typography>
+
+                            {/* 현재 위치 버튼 */}
+                            <Button
+                                variant="outlined"
+                                startIcon={isLocationLoading ? <CircularProgress size={20} /> : <MyLocationIcon />}
+                                onClick={handleGetCurrentLocation}
+                                disabled={isLocationLoading}
+                                sx={{ mb: 2 }}
+                            >
+                                {isLocationLoading ? '위치 확인 중...' : '현재 위치 사용'}
+                            </Button>
+
+                            {currentLocation && (
+                                <Alert severity="success" sx={{ mb: 2 }}>
+                                    현재 위치: {currentLocation.latitude.toFixed(6)}, {currentLocation.longitude.toFixed(6)}
+                                </Alert>
+                            )}
+
+                            {locationError && (
+                                <Alert severity="warning" sx={{ mb: 2 }}>
+                                    {locationError}
+                                </Alert>
+                            )}
+                        </Box>
+
                         <TextField
                             fullWidth
                             label="매장 주소"
@@ -139,6 +242,22 @@ const StoreEditScreen: React.FC = () => {
                             required
                             helperText="고객이 찾아올 수 있는 정확한 주소를 입력하세요"
                         />
+
+                        {/* 좌표 정보 표시 */}
+                        {(storeData.latitude && storeData.longitude) && (
+                            <Box sx={{ bgcolor: 'primary.50', p: 2, borderRadius: 1 }}>
+                                <Typography variant="body2" color="primary.main" gutterBottom>
+                                    📍 좌표 정보
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    위도: {storeData.latitude.toFixed(6)}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary">
+                                    경도: {storeData.longitude.toFixed(6)}
+                                </Typography>
+                            </Box>
+                        )}
+
                         <TextField
                             fullWidth
                             label="전화번호"
@@ -172,6 +291,9 @@ const StoreEditScreen: React.FC = () => {
                             <Typography variant="body2">• 매장명: {storeData.name}</Typography>
                             <Typography variant="body2">• 설명: {storeData.description}</Typography>
                             <Typography variant="body2">• 주소: {storeData.address}</Typography>
+                            {(storeData.latitude && storeData.longitude) && (
+                                <Typography variant="body2">• 좌표: {storeData.latitude.toFixed(6)}, {storeData.longitude.toFixed(6)}</Typography>
+                            )}
                             <Typography variant="body2">• 전화번호: {storeData.phone}</Typography>
                             <Typography variant="body2">• 영업시간: {storeData.businessHours}</Typography>
                         </Box>

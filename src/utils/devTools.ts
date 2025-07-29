@@ -8,6 +8,7 @@ interface DebugAuth {
     changeMyRole: (newRole: 'customer' | 'store_owner' | 'admin') => Promise<boolean>;
     fixTestAccounts: () => Promise<void>;
     checkUserRole: (uid: string) => Promise<string | null>;
+    updateExistingStoresLocation: () => Promise<void>;
 }
 
 declare global {
@@ -133,6 +134,67 @@ const fixTestAccounts = async (): Promise<void> => {
     }
 };
 
+// 기존 매장들의 위치 정보 일괄 업데이트
+const updateExistingStoresLocation = async (): Promise<void> => {
+    console.log('🔧 기존 매장 위치 정보 업데이트 중...');
+
+    try {
+        const { collection, getDocs, updateDoc, doc } = await import('firebase/firestore');
+        const { db } = await import('../config/firebase');
+        const { geocodeAddress } = await import('./locationHelper');
+
+        const storesRef = collection(db, 'stores');
+        const storesSnapshot = await getDocs(storesRef);
+
+        let updatedCount = 0;
+        let errorCount = 0;
+
+        for (const storeDoc of storesSnapshot.docs) {
+            const storeData = storeDoc.data();
+
+            // 이미 위치 정보가 있으면 건너뛰기
+            if (storeData.latitude && storeData.longitude) {
+                console.log(`⏭️ ${storeData.name}: 이미 위치 정보 있음`);
+                continue;
+            }
+
+            // 주소가 없으면 건너뛰기
+            if (!storeData.address) {
+                console.log(`⚠️ ${storeData.name}: 주소 정보 없음`);
+                continue;
+            }
+
+            try {
+                // 주소를 좌표로 변환
+                const location = await geocodeAddress(storeData.address);
+
+                // 매장 정보 업데이트
+                await updateDoc(doc(db, 'stores', storeDoc.id), {
+                    latitude: location.latitude,
+                    longitude: location.longitude,
+                    updatedAt: new Date(),
+                });
+
+                console.log(`✅ ${storeData.name}: 위치 정보 업데이트 완료 (${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)})`);
+                updatedCount++;
+            } catch (error) {
+                console.error(`❌ ${storeData.name}: 위치 정보 업데이트 실패`, error);
+                errorCount++;
+            }
+        }
+
+        console.log(`🎉 위치 정보 업데이트 완료: ${updatedCount}개 성공, ${errorCount}개 실패`);
+
+        if (updatedCount > 0) {
+            console.log('🔄 페이지를 새로고침합니다...');
+            setTimeout(() => window.location.reload(), 1000);
+        }
+
+    } catch (error) {
+        console.error('❌ 기존 매장 위치 정보 업데이트 실패:', error);
+    }
+};
+
 // 개발자 도구 초기화
 const initializeDevTools = (): void => {
     if (typeof window !== 'undefined') {
@@ -143,6 +205,7 @@ const initializeDevTools = (): void => {
             changeMyRole,
             fixTestAccounts,
             checkUserRole,
+            updateExistingStoresLocation,
         };
     }
 };
