@@ -32,21 +32,6 @@ export const isWebView = (): boolean => {
 };
 
 /**
- * 강제로 화면을 다시 렌더링합니다.
- * WebView에서 UI 업데이트가 제대로 반영되지 않을 때 사용합니다.
- */
-const forceRerender = (): void => {
-    try {
-        // 스타일 변경으로 강제 리플로우 유발
-        document.body.style.display = 'none';
-        document.body.offsetHeight; // 강제 리플로우
-        document.body.style.display = '';
-    } catch (error) {
-        console.warn('강제 리렌더링 실패 (무시됨):', error);
-    }
-};
-
-/**
  * 터치 이벤트를 시뮬레이션하여 WebView의 응답성을 개선합니다.
  */
 const activateWebViewTouch = (): void => {
@@ -58,7 +43,6 @@ const activateWebViewTouch = (): void => {
         });
         document.body.dispatchEvent(touchEvent);
     } catch (error) {
-        // TouchEvent를 지원하지 않는 환경에서는 무시
         console.warn('터치 이벤트 시뮬레이션 실패 (무시됨):', error);
     }
 };
@@ -88,14 +72,8 @@ export const optimizeWebViewTransition = (callback?: () => void): void => {
     }
 
     try {
-        // 1. 터치 이벤트 활성화
         activateWebViewTouch();
-
-        // 2. 렌더링 보장
         ensureRender(() => {
-            // 3. 강제 리렌더링 (필요한 경우)
-            forceRerender();
-
             if (callback) {
                 callback();
             }
@@ -112,11 +90,10 @@ export const optimizeWebViewTransition = (callback?: () => void): void => {
  * @param delay 지연 시간 (밀리초, 기본값: 100ms)
  */
 export const optimizeWebViewDataLoading = (
-    loadFunction: () => void | Promise<void>, 
+    loadFunction: () => void | Promise<void>,
     delay: number = 100
 ): void => {
     if (!isWebView()) {
-        // 일반 브라우저에서는 즉시 실행
         if (typeof loadFunction === 'function') {
             loadFunction();
         }
@@ -124,7 +101,6 @@ export const optimizeWebViewDataLoading = (
     }
 
     try {
-        // WebView에서는 초기 렌더링 완료 후 데이터 로딩
         setTimeout(() => {
             requestAnimationFrame(() => {
                 requestAnimationFrame(() => {
@@ -147,6 +123,96 @@ export const optimizeWebViewDataLoading = (
 };
 
 /**
+ * WebView 환경에서 리스트 렌더링을 최적화합니다.
+ * @param containerSelector 리스트 컨테이너의 CSS 선택자
+ * @param callback 최적화 완료 후 실행할 콜백 함수 (선택적)
+ */
+export const optimizeWebViewListRendering = (
+    containerSelector: string = '[data-testid="list-container"]',
+    callback?: () => void
+): void => {
+    if (!isWebView()) {
+        if (callback) callback();
+        return;
+    }
+
+    try {
+        const performOptimization = () => {
+            try {
+                const container = document.querySelector(containerSelector);
+                if (container instanceof HTMLElement) {
+                    container.style.opacity = '0.99';
+                    container.offsetHeight;
+
+                    requestAnimationFrame(() => {
+                        container.style.opacity = '1';
+                        container.style.transform = 'translateZ(0)';
+                        container.style.willChange = 'opacity, transform';
+
+                        const touchEvent = new TouchEvent('touchstart', {
+                            bubbles: true,
+                            cancelable: true,
+                            touches: []
+                        });
+                        container.dispatchEvent(touchEvent);
+
+                        if (callback) {
+                            callback();
+                        }
+                    });
+                } else {
+                    if (callback) callback();
+                }
+            } catch (error) {
+                console.warn('WebView 리스트 렌더링 최적화 실패 (무시됨):', error);
+                if (callback) callback();
+            }
+        };
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                performOptimization();
+            });
+        });
+
+    } catch (error) {
+        console.warn('WebView 리스트 렌더링 최적화 초기화 실패:', error);
+        if (callback) callback();
+    }
+};
+
+/**
+ * WebView 환경에서 스크롤 성능을 최적화합니다.
+ * @param containerSelector 스크롤 컨테이너의 CSS 선택자
+ */
+export const optimizeWebViewScrolling = (containerSelector: string): void => {
+    if (!isWebView()) {
+        return;
+    }
+
+    try {
+        const container = document.querySelector(containerSelector);
+        if (container instanceof HTMLElement) {
+            (container.style as any).webkitOverflowScrolling = 'touch';
+            (container.style as any).overflowScrolling = 'touch';
+            container.style.willChange = 'scroll-position';
+
+            let scrollTimeout: NodeJS.Timeout;
+            const handleScroll = () => {
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    container.style.willChange = 'auto';
+                }, 150);
+            };
+
+            container.addEventListener('scroll', handleScroll, { passive: true });
+        }
+    } catch (error) {
+        console.warn('WebView 스크롤 최적화 실패 (무시됨):', error);
+    }
+};
+
+/**
  * WebView용 최적화된 로그아웃 처리
  * @param logoutCallback Firebase 로그아웃 함수
  * @returns Promise<void>
@@ -154,12 +220,10 @@ export const optimizeWebViewDataLoading = (
 export const optimizeWebViewLogout = (logoutCallback: () => Promise<void>): Promise<void> => {
     return new Promise((resolve, reject) => {
         try {
-            // Flutter 헬퍼 함수 호출 (있다면)
             if (window.flutterLogoutHelper) {
                 window.flutterLogoutHelper();
             }
 
-            // WebView에서는 즉시 스토리지 클리어
             const clearStorage = (): void => {
                 try {
                     localStorage.clear();
@@ -171,14 +235,13 @@ export const optimizeWebViewLogout = (logoutCallback: () => Promise<void>): Prom
 
             clearStorage();
 
-            // 150ms 지연 후 부드러운 화면 전환
             setTimeout(async () => {
                 try {
                     await logoutCallback();
                     resolve();
                 } catch (error) {
                     console.warn('WebView: 로그아웃 콜백 실패 (무시됨):', error);
-                    resolve(); // 에러가 발생해도 성공으로 처리
+                    resolve();
                 }
             }, 150);
 
@@ -252,11 +315,9 @@ export const createStoreOwnerAccount = async (
         const { doc, setDoc } = await import('firebase/firestore');
         const { db } = await import('../config/firebase');
 
-        // Firebase Auth로 사용자 생성
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
 
-        // Firestore에 매장관리자 정보 저장
         await setDoc(doc(db, 'users', user.uid), {
             email: user.email,
             name: name,

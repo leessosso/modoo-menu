@@ -25,32 +25,13 @@ import {
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import { useStoreStore } from '../../stores/storeStore';
-import { optimizeWebViewTransition, optimizeWebViewDataLoading } from '../../utils/webviewHelper';
+import { optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
 import type { Store } from '../../types/store';
 
 // 거리 정보가 포함된 매장 타입
 interface StoreWithDistance extends Store {
     distance?: number;
 }
-
-// 거리 계산 함수 (haversine formula) - 향후 실제 위치 기반 거리 계산에 사용 예정
-// const calculateDistance = (
-//     lat1: number,
-//     lon1: number,
-//     lat2: number,
-//     lon2: number
-// ): number => {
-//     const R = 6371; // 지구 반지름 (km)
-//     const dLat = (lat2 - lat1) * Math.PI / 180;
-//     const dLon = (lon2 - lon1) * Math.PI / 180;
-//     const a =
-//         Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-//         Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
-//         Math.sin(dLon / 2) * Math.sin(dLon / 2);
-//     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-//     const distance = R * c;
-//     return Math.round(distance * 10) / 10; // 소수점 1자리까지
-// };
 
 // 현재 위치 가져오기 함수
 const getCurrentLocation = (): Promise<{ lat: number; lon: number }> => {
@@ -69,12 +50,11 @@ const getCurrentLocation = (): Promise<{ lat: number; lon: number }> => {
             },
             (error) => {
                 console.warn('위치 가져오기 실패:', error);
-                // 테스트용 기본 위치 (서울 중심부)
                 resolve({ lat: 37.5665, lon: 126.9780 });
             },
             {
                 timeout: 10000,
-                maximumAge: 5 * 60 * 1000, // 5분
+                maximumAge: 5 * 60 * 1000,
             }
         );
     });
@@ -117,7 +97,6 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, onSelect }) => {
                 </Typography>
 
                 <Stack spacing={1}>
-                    {/* 주소 */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <LocationOnIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
@@ -133,7 +112,6 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, onSelect }) => {
                         )}
                     </Box>
 
-                    {/* 전화번호 */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <PhoneIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
@@ -141,7 +119,6 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, onSelect }) => {
                         </Typography>
                     </Box>
 
-                    {/* 영업시간 */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <AccessTimeIcon fontSize="small" color="action" />
                         <Typography variant="body2" color="text.secondary">
@@ -150,7 +127,6 @@ const StoreCard: React.FC<StoreCardProps> = ({ store, onSelect }) => {
                     </Box>
                 </Stack>
 
-                {/* 카테고리 */}
                 {store.categories && store.categories.length > 0 && (
                     <>
                         <Divider sx={{ my: 2 }} />
@@ -200,13 +176,14 @@ const CustomerStoreListScreen: React.FC = () => {
     const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
     const [isLocationLoading, setIsLocationLoading] = useState(true);
+    const [storeListReady, setStoreListReady] = useState(false);
 
     // WebView 렌더링 최적화
     useEffect(() => {
         optimizeWebViewTransition();
     }, []);
 
-    // 컴포넌트 마운트 시 현재 위치 가져오기 (WebView 최적화 적용)
+    // 현재 위치 가져오기
     useEffect(() => {
         const getLocation = async () => {
             try {
@@ -216,8 +193,6 @@ const CustomerStoreListScreen: React.FC = () => {
                 setLocationError(null);
             } catch (error: any) {
                 setLocationError(error.message);
-                console.warn('위치 가져오기 실패, 테스트 모드로 진행:', error);
-                // 테스트용 기본 위치 설정
                 setUserLocation({ lat: 37.5665, lon: 126.9780 });
             } finally {
                 setIsLocationLoading(false);
@@ -226,41 +201,38 @@ const CustomerStoreListScreen: React.FC = () => {
 
         optimizeWebViewDataLoading(() => {
             getLocation();
-        }, 50); // 위치 정보는 더 빨리 로드
+        }, 50);
     }, []);
 
-    // 매장 목록 가져오기 (WebView 최적화 적용)
+    // 매장 목록 가져오기
     useEffect(() => {
         optimizeWebViewDataLoading(() => {
             fetchAllStores();
         });
     }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-    // 거리가 포함된 매장 목록 계산 (WebView 즉시 응답성을 위해 useMemo 제거)
-    console.log('🏪 CustomerStoreList - stores 상태:', { 
-        storesLength: stores.length, 
-        userLocation: userLocation ? 'available' : 'null',
-        stores: stores.map(s => ({ id: s.id, name: s.name }))
-    });
-
+    // 거리가 포함된 매장 목록 계산
     const storesWithDistance: StoreWithDistance[] = (() => {
         if (!userLocation || !stores.length) {
-            console.log('🏪 CustomerStoreList - 조건 불충족:', { userLocation: !!userLocation, storesLength: stores.length });
             return stores;
         }
 
-        const result = stores.map((store): StoreWithDistance => ({
+        return stores.map((store): StoreWithDistance => ({
             ...store,
-            // 테스트를 위해 임시로 랜덤 거리 생성 (실제로는 store.location 사용)
             distance: Math.round((Math.random() * 5 + 0.5) * 10) / 10,
         })).sort((a, b) => (a.distance || 0) - (b.distance || 0));
-
-        console.log('🏪 CustomerStoreList - storesWithDistance 계산 완료:', { count: result.length, stores: result.map(s => ({ name: s.name, distance: s.distance })) });
-        return result;
     })();
 
+    // 매장 리스트 렌더링 최적화
+    useEffect(() => {
+        if (storesWithDistance.length > 0 && !storeListReady && !isLoading) {
+            optimizeWebViewListRendering('[data-testid="store-list-container"]', () => {
+                setStoreListReady(true);
+            });
+        }
+    }, [storesWithDistance.length, storeListReady, isLoading]);
+
     const handleStoreSelect = (store: Store) => {
-        console.log('매장 선택:', store);
         optimizeWebViewTransition();
         navigate(`/store/${store.id}/menu`);
     };
@@ -276,7 +248,6 @@ const CustomerStoreListScreen: React.FC = () => {
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-            {/* 헤더 */}
             <AppBar position="static">
                 <Toolbar>
                     <IconButton
@@ -294,7 +265,6 @@ const CustomerStoreListScreen: React.FC = () => {
             </AppBar>
 
             <Container maxWidth="md" sx={{ py: 2 }}>
-                {/* 위치 정보 */}
                 {locationError && (
                     <Alert severity="warning" sx={{ mb: 2 }}>
                         위치 정보를 가져올 수 없어 테스트 모드로 실행됩니다.
@@ -314,17 +284,14 @@ const CustomerStoreListScreen: React.FC = () => {
                     </Card>
                 )}
 
-                {/* 로딩 상태 */}
                 {isLoading && <LoadingSpinner message="매장 목록을 가져오는 중..." />}
 
-                {/* 에러 상태 */}
                 {error && (
                     <Alert severity="error" sx={{ mb: 2 }}>
                         {error}
                     </Alert>
                 )}
 
-                {/* 매장 목록 */}
                 {!isLoading && !error && (
                     <>
                         {storesWithDistance.length === 0 ? (
@@ -334,7 +301,15 @@ const CustomerStoreListScreen: React.FC = () => {
                                 description="아직 등록된 매장이 없어요. 잠시만 기다려주세요!"
                             />
                         ) : (
-                            <>
+                            <Box
+                                data-testid="store-list-container"
+                                sx={{
+                                    opacity: storeListReady ? 1 : 0.7,
+                                    transition: 'opacity 0.2s ease-in-out',
+                                    transform: 'translateZ(0)',
+                                    willChange: 'opacity'
+                                }}
+                            >
                                 <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
                                     전체 {storesWithDistance.length}개 매장
                                 </Typography>
@@ -346,7 +321,7 @@ const CustomerStoreListScreen: React.FC = () => {
                                         onSelect={handleStoreSelect}
                                     />
                                 ))}
-                            </>
+                            </Box>
                         )}
                     </>
                 )}

@@ -25,7 +25,7 @@ import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import DashboardHeader from '../common/DashboardHeader';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
-import { optimizeWebViewTransition, optimizeWebViewDataLoading } from '../../utils/webviewHelper';
+import { optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
 import type { Store } from '../../types/store';
 
 const DashboardScreen: React.FC = () => {
@@ -35,13 +35,14 @@ const DashboardScreen: React.FC = () => {
 
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null);
   const [isLocationLoading, setIsLocationLoading] = useState(true);
+  const [nearbyStoresReady, setNearbyStoresReady] = useState(false);
 
   // WebView 렌더링 최적화
   useEffect(() => {
     optimizeWebViewTransition();
   }, []);
 
-  // 현재 위치 가져오기 (WebView 최적화 적용)
+  // 현재 위치 가져오기
   useEffect(() => {
     const getLocation = async () => {
       try {
@@ -56,7 +57,6 @@ const DashboardScreen: React.FC = () => {
               setIsLocationLoading(false);
             },
             () => {
-              // 위치 권한 거부 시 테스트용 위치 사용
               setUserLocation({ lat: 37.5665, lon: 126.9780 });
               setIsLocationLoading(false);
             },
@@ -74,71 +74,64 @@ const DashboardScreen: React.FC = () => {
 
     optimizeWebViewDataLoading(() => {
       getLocation();
-    }, 50); // 위치 정보는 더 빨리 로드
+    }, 50);
   }, []);
 
-  // 매장 목록 가져오기 (WebView 최적화 적용)
+  // 매장 목록 가져오기
   useEffect(() => {
     optimizeWebViewDataLoading(() => {
       fetchAllStores();
     });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // 가까운 매장 3개 계산 (WebView 즉시 응답성을 위해 useMemo 제거)
-  console.log('🏪 Dashboard - stores 상태:', { 
-    storesLength: stores.length, 
-    userLocation: userLocation ? 'available' : 'null',
-    stores: stores.map(s => ({ id: s.id, name: s.name }))
-  });
-
+  // 가까운 매장 3개 계산
   const nearbyStores = (() => {
     if (!userLocation || !stores.length) {
-      console.log('🏪 Dashboard - 조건 불충족:', { userLocation: !!userLocation, storesLength: stores.length });
       return [];
     }
 
-    const result = stores
+    return stores
       .map((store) => ({
         ...store,
-        // 테스트용 랜덤 거리 생성
         distance: Math.round((Math.random() * 5 + 0.5) * 10) / 10,
       }))
       .sort((a, b) => (a.distance || 0) - (b.distance || 0))
       .slice(0, 3);
-
-    console.log('🏪 Dashboard - nearbyStores 계산 완료:', { count: result.length, stores: result.map(s => ({ name: s.name, distance: s.distance })) });
-    return result;
   })();
 
-  // 매장 리스트로 이동
+  // 매장 리스트 렌더링 최적화
+  useEffect(() => {
+    if (nearbyStores.length > 0 && !nearbyStoresReady) {
+      optimizeWebViewListRendering('[data-testid="nearby-stores-container"]', () => {
+        setNearbyStoresReady(true);
+      });
+    }
+  }, [nearbyStores.length, nearbyStoresReady]);
+
+  // 이벤트 핸들러들
   const handleStoreListClick = () => {
     optimizeWebViewTransition();
     navigate('/stores');
   };
 
-  // QR코드 스캔 기능 (TODO)
   const handleQRScanClick = () => {
     alert('QR코드 스캔 기능은 곧 개발될 예정입니다!');
   };
 
-  // 주문 내역 기능 (TODO)
   const handleOrderHistoryClick = () => {
     alert('주문 내역 기능은 곧 개발될 예정입니다!');
   };
 
-  // 즐겨찾기 기능 (TODO)
   const handleFavoritesClick = () => {
     alert('즐겨찾기 기능은 곧 개발될 예정입니다!');
   };
 
-  // 매장 선택
   const handleStoreSelect = (store: Store) => {
-    console.log('매장 선택:', store);
     optimizeWebViewTransition();
     navigate(`/store/${store.id}/menu`);
   };
 
-  // 메뉴 아이템들을 useMemo로 최적화
+  // 메뉴 아이템들
   const menuItems = useMemo(() => [
     {
       title: 'QR코드 스캔',
@@ -170,20 +163,17 @@ const DashboardScreen: React.FC = () => {
     },
   ], [handleQRScanClick, handleStoreListClick, handleOrderHistoryClick, handleFavoritesClick]);
 
-  // 사용자 생성일을 useMemo로 최적화
   const userCreatedDate = useMemo(() => {
     return user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-';
   }, [user?.createdAt]);
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-      {/* 헤더 */}
       <DashboardHeader
         title={`🍽️ ${APP_CONFIG.NAME}`}
         maxWidth="md"
       />
 
-      {/* 메인 콘텐츠 */}
       <Container maxWidth="md" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
         {/* 환영 메시지 */}
         <Paper sx={{ p: UI_CONSTANTS.SPACING.LG, mb: UI_CONSTANTS.SPACING.LG, textAlign: 'center' }}>
@@ -225,7 +215,18 @@ const DashboardScreen: React.FC = () => {
               </Typography>
             </Box>
           ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Box
+              data-testid="nearby-stores-container"
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                opacity: nearbyStoresReady ? 1 : 0.7,
+                transition: 'opacity 0.2s ease-in-out',
+                transform: 'translateZ(0)',
+                willChange: 'opacity'
+              }}
+            >
               {nearbyStores.map((store) => (
                 <Card
                   key={store.id}
@@ -237,6 +238,10 @@ const DashboardScreen: React.FC = () => {
                       transform: 'translateY(-2px)',
                       boxShadow: 2,
                     },
+                    '&:active': {
+                      transform: 'translateY(0px)',
+                      boxShadow: 1,
+                    }
                   }}
                 >
                   <CardContent sx={{ p: 2 }}>
