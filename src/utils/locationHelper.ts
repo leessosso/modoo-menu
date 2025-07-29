@@ -21,7 +21,6 @@ export const getCurrentLocation = (): Promise<Location> => {
             },
             (error) => {
                 console.warn('위치 가져오기 실패:', error);
-                // 실제 위치 가져오기 실패 시에만 기본 위치 사용
                 reject(new Error('실제 위치를 가져올 수 없습니다.'));
             },
             {
@@ -60,7 +59,7 @@ export const calculateDistance = (
 };
 
 /**
- * 주소를 좌표로 변환하는 함수 (실제 Google Maps Geocoding API 사용)
+ * 주소를 좌표로 변환하는 함수
  * @param address 주소
  * @returns Promise<Location>
  */
@@ -84,7 +83,7 @@ export const geocodeAddress = async (address: string): Promise<Location> => {
                 longitude: location.lng,
             };
         } else {
-            throw new Error(`Geocoding 실패: ${data.status} - ${data.error_message || '알 수 없는 오류'}`);
+            throw new Error(`Geocoding 실패: ${data.status}`);
         }
     } catch (error) {
         console.error('실제 Geocoding 실패, 테스트 모드로 진행:', error);
@@ -93,13 +92,12 @@ export const geocodeAddress = async (address: string): Promise<Location> => {
 };
 
 /**
- * 테스트용 주소 변환 함수 (기존 로직)
+ * 테스트용 주소 변환 함수
  * @param address 주소
  * @returns Promise<Location>
  */
 const geocodeAddressTest = async (address: string): Promise<Location> => {
     try {
-        // 테스트용으로 랜덤 좌표 반환
         const baseLat = 37.5665;
         const baseLon = 126.9780;
 
@@ -109,7 +107,7 @@ const geocodeAddressTest = async (address: string): Promise<Location> => {
             return a & a;
         }, 0);
 
-        const latOffset = (hash % 100) / 1000; // ±0.1도 범위
+        const latOffset = (hash % 100) / 1000;
         const lonOffset = ((hash * 2) % 100) / 1000;
 
         return {
@@ -132,84 +130,4 @@ export const formatDistance = (distance: number): string => {
         return `${Math.round(distance * 1000)}m`;
     }
     return `${distance}km`;
-};
-
-/**
- * 예상 이동 시간을 계산하는 함수
- * @param distance 거리 (km)
- * @param averageSpeed 평균 속도 (km/h, 기본값: 5km/h 도보)
- * @returns 예상 이동 시간 (분)
- */
-export const calculateDuration = (distance: number, averageSpeed: number = 5): number => {
-    return Math.round((distance / averageSpeed) * 60);
-};
-
-/**
- * 위치 기반 매장 정렬 함수
- * @param stores 매장 목록
- * @param userLocation 사용자 위치
- * @returns 거리순으로 정렬된 매장 목록
- */
-export const sortStoresByDistance = (
-    stores: Array<{ latitude?: number; longitude?: number }>,
-    userLocation: Location
-): Array<{ distance: number; store: any }> => {
-    return stores
-        .filter(store => store.latitude && store.longitude)
-        .map(store => ({
-            distance: calculateDistance(
-                userLocation.latitude,
-                userLocation.longitude,
-                store.latitude!,
-                store.longitude!
-            ),
-            store
-        }))
-        .sort((a, b) => a.distance - b.distance);
-};
-
-/**
- * 위치 권한 상태를 확인하는 함수
- * @returns Promise<'granted' | 'denied' | 'prompt'>
- */
-export const checkLocationPermission = (): Promise<'granted' | 'denied' | 'prompt'> => {
-    return new Promise((resolve) => {
-        if (!navigator.permissions) {
-            // permissions API가 지원되지 않는 경우
-            resolve('prompt');
-            return;
-        }
-
-        navigator.permissions.query({ name: 'geolocation' as PermissionName })
-            .then((permissionStatus) => {
-                resolve(permissionStatus.state);
-
-                // 권한 상태 변경 감지
-                permissionStatus.onchange = () => {
-                    console.log('위치 권한 상태 변경:', permissionStatus.state);
-                };
-            })
-            .catch(() => {
-                resolve('prompt');
-            });
-    });
-};
-
-/**
- * 위치 권한을 요청하는 함수
- * @returns Promise<boolean>
- */
-export const requestLocationPermission = (): Promise<boolean> => {
-    return new Promise((resolve) => {
-        if (!navigator.geolocation) {
-            resolve(false);
-            return;
-        }
-
-        navigator.geolocation.getCurrentPosition(
-            () => resolve(true),
-            () => resolve(false),
-            { timeout: 5000 }
-        );
-    });
 }; 

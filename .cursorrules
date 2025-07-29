@@ -8,8 +8,8 @@
 이 프로젝트는 "모두의 메뉴" - 실시간 위치 기반 메뉴 주문 시스템입니다.
 - **기술 스택**: React 19 + TypeScript + Vite, MUI v7, Firebase, Zustand
 - **배포 환경**: Flutter WebView
-- **현재 상태**: Phase 3 완료 (98%) - 매장관리자 시스템 구축 완료
-- **다음 목표**: Phase 4 고객용 시스템 개발
+- **현재 상태**: Phase 4 진행 중 (Flutter ↔ WebView 위치 정보 연동 + 코드 리팩토링 완료)
+- **다음 목표**: Phase 4 계속 (QR코드 스캔, 장바구니 시스템)
 
 ## 🎯 최우선 원칙
 1. **WebView 최적화가 최우선** - 일반 웹 최적화보다 WebView 특성에 맞춘 최적화
@@ -93,6 +93,24 @@ import { optimizeWebViewTransition } from '@/utils/webviewHelper';
 const handleNavigation = () => {
   optimizeWebViewTransition();
   navigate('/target-screen');
+};
+
+// Flutter 위치 정보 연동
+import { checkFlutterLocationPermission, getFlutterLocation } from '@/utils/webviewHelper';
+
+// Flutter에서 전달받은 위치 정보 우선 사용
+const getLocation = async () => {
+  // 1. Flutter에서 전달받은 위치 정보 확인
+  const flutterPermission = await checkFlutterLocationPermission();
+  if (flutterPermission) {
+    const flutterLocation = await getFlutterLocation();
+    if (flutterLocation) {
+      return flutterLocation; // Flutter 위치 사용
+    }
+  }
+  
+  // 2. Flutter 위치 정보가 없으면 브라우저 GPS 사용
+  return await getCurrentLocation();
 };
 ```
 
@@ -240,6 +258,8 @@ const updateState = useCallback((newData: any) => {
 window.debugAuth.getCurrentUser()           // 현재 사용자 정보
 window.debugAuth.changeMyRole("store_owner") // 역할 변경
 window.debugAuth.fixTestAccounts()          // 테스트 계정 수정
+window.debugAuth.simulateFlutterLocation()  // Flutter 위치 정보 시뮬레이션
+window.debugAuth.removeFlutterLocation()    // Flutter 위치 정보 제거
 ```
 
 ## ⚠️ 주의사항
@@ -251,7 +271,7 @@ window.debugAuth.fixTestAccounts()          // 테스트 계정 수정
 
 ## 🎯 Phase 4 개발 준비사항
 다음 단계인 고객용 시스템 개발을 위해:
-- 실시간 거리측정 기반 매장 찾기 (GPS 위치 활용) ✅
+- 실시간 거리측정 기반 매장 찾기 (Flutter ↔ WebView 위치 정보 연동) ✅
 - QR코드 스캔 기능 (보조 수단)
 - 고객용 메뉴 브라우징 (슬라이드 기능 포함) ✅
 - 장바구니 시스템

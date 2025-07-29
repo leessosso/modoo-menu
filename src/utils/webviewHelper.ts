@@ -1,4 +1,5 @@
 // WebView 환경 감지 및 최적화 유틸리티
+import type { Location } from '../types/store';
 
 interface WebViewInterface {
     flutterLogoutHelper?: () => void;
@@ -100,31 +101,20 @@ export const optimizeWebViewDataLoading = (
         return;
     }
 
-    try {
-        setTimeout(() => {
-            requestAnimationFrame(() => {
-                requestAnimationFrame(() => {
-                    try {
-                        if (typeof loadFunction === 'function') {
-                            loadFunction();
-                        }
-                    } catch (error) {
-                        console.warn('WebView 데이터 로딩 실패 (무시됨):', error);
-                    }
-                });
-            });
-        }, delay);
-    } catch (error) {
-        console.warn('WebView 데이터 로딩 최적화 실패, 기본 로딩으로 대체:', error);
-        if (typeof loadFunction === 'function') {
-            loadFunction();
+    setTimeout(() => {
+        try {
+            if (typeof loadFunction === 'function') {
+                loadFunction();
+            }
+        } catch (error) {
+            console.warn('WebView 데이터 로딩 최적화 실패:', error);
         }
-    }
+    }, delay);
 };
 
 /**
  * WebView 환경에서 리스트 렌더링을 최적화합니다.
- * @param containerSelector 리스트 컨테이너의 CSS 선택자
+ * @param containerSelector 컨테이너 선택자
  * @param callback 최적화 완료 후 실행할 콜백 함수 (선택적)
  */
 export const optimizeWebViewListRendering = (
@@ -182,27 +172,21 @@ export const optimizeWebViewListRendering = (
 };
 
 /**
- * WebView 환경에서 스크롤 성능을 최적화합니다.
- * @param containerSelector 스크롤 컨테이너의 CSS 선택자
+ * WebView 환경에서 스크롤을 최적화합니다.
+ * @param containerSelector 컨테이너 선택자
  */
 export const optimizeWebViewScrolling = (containerSelector: string): void => {
-    if (!isWebView()) {
-        return;
-    }
+    if (!isWebView()) return;
 
     try {
         const container = document.querySelector(containerSelector);
         if (container instanceof HTMLElement) {
             (container.style as any).webkitOverflowScrolling = 'touch';
             (container.style as any).overflowScrolling = 'touch';
-            container.style.willChange = 'scroll-position';
 
-            let scrollTimeout: NodeJS.Timeout;
             const handleScroll = () => {
-                clearTimeout(scrollTimeout);
-                scrollTimeout = setTimeout(() => {
-                    container.style.willChange = 'auto';
-                }, 150);
+                container.style.transform = 'translateZ(0)';
+                container.style.willChange = 'transform';
             };
 
             container.addEventListener('scroll', handleScroll, { passive: true });
@@ -213,123 +197,139 @@ export const optimizeWebViewScrolling = (containerSelector: string): void => {
 };
 
 /**
- * WebView용 최적화된 로그아웃 처리
- * @param logoutCallback Firebase 로그아웃 함수
- * @returns Promise<void>
+ * WebView 환경에서 로그아웃을 최적화합니다.
+ * @param logoutCallback 로그아웃 콜백 함수
  */
 export const optimizeWebViewLogout = (logoutCallback: () => Promise<void>): Promise<void> => {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve) => {
         try {
-            if (window.flutterLogoutHelper) {
+            if (isWebView() && window.flutterLogoutHelper) {
+                const clearStorage = (): void => {
+                    try {
+                        localStorage.clear();
+                        sessionStorage.clear();
+                    } catch (error) {
+                        console.warn('스토리지 정리 실패:', error);
+                    }
+                };
+
+                clearStorage();
                 window.flutterLogoutHelper();
+
+                setTimeout(() => {
+                    requestAnimationFrame(() => {
+                        logoutCallback().finally(resolve);
+                    });
+                }, 150);
+            } else {
+                await logoutCallback();
+                resolve();
             }
-
-            const clearStorage = (): void => {
-                try {
-                    localStorage.clear();
-                    sessionStorage.clear();
-                } catch (storageError) {
-                    console.warn('WebView: 스토리지 클리어 실패 (무시됨):', storageError);
-                }
-            };
-
-            clearStorage();
-
-            setTimeout(async () => {
-                try {
-                    await logoutCallback();
-                    resolve();
-                } catch (error) {
-                    console.warn('WebView: 로그아웃 콜백 실패 (무시됨):', error);
-                    resolve();
-                }
-            }, 150);
-
         } catch (error) {
-            console.error('WebView 로그아웃 최적화 실패:', error);
-            reject(error);
+            console.warn('WebView 로그아웃 최적화 실패:', error);
+            await logoutCallback();
+            resolve();
         }
     });
 };
 
-// 사용자 역할 관리 유틸리티 함수들
 /**
- * Firestore에서 사용자 역할을 확인합니다.
- * @param uid 사용자 ID
- * @returns 사용자 역할 또는 null
+ * Flutter에서 전달받은 위치 정보를 처리하는 함수
+ * @param locationData Flutter에서 전달받은 위치 데이터
+ * @returns Location 객체
  */
-export const checkUserRole = async (uid: string): Promise<string | null> => {
+export const handleFlutterLocationData = (locationData: any): Location | null => {
     try {
-        const { doc, getDoc } = await import('firebase/firestore');
-        const { db } = await import('../config/firebase');
+        // Flutter에서 전달받은 데이터 형식에 따라 처리
+        if (locationData && typeof locationData === 'object') {
+            // URL 파라미터로 전달된 경우
+            if (locationData.lat && locationData.lng) {
+                return {
+                    latitude: parseFloat(locationData.lat),
+                    longitude: parseFloat(locationData.lng),
+                };
+            }
 
-        const userDoc = await getDoc(doc(db, 'users', uid));
-        return userDoc.exists() ? userDoc.data()?.role || null : null;
+            // JavaScript Bridge로 전달된 경우
+            if (locationData.latitude && locationData.longitude) {
+                return {
+                    latitude: parseFloat(locationData.latitude),
+                    longitude: parseFloat(locationData.longitude),
+                };
+            }
+
+            // 권한 상태만 전달된 경우
+            if (locationData.permissionGranted === true) {
+                console.log('📍 Flutter에서 위치 권한이 허용되었습니다.');
+                return null; // 실제 위치는 별도로 가져와야 함
+            }
+        }
+
+        return null;
     } catch (error) {
-        console.error('사용자 역할 확인 실패:', error);
+        console.warn('Flutter 위치 데이터 처리 실패:', error);
         return null;
     }
 };
 
 /**
- * Firestore에서 사용자 역할을 업데이트합니다.
- * @param uid 사용자 ID
- * @param newRole 새로운 역할
- * @returns 성공 여부
+ * Flutter에서 전달받은 권한 상태를 확인하는 함수
+ * @returns Promise<boolean>
  */
-export const updateUserRole = async (
-    uid: string,
-    newRole: 'customer' | 'store_owner' | 'admin'
-): Promise<boolean> => {
+export const checkFlutterLocationPermission = async (): Promise<boolean> => {
     try {
-        const { doc, updateDoc } = await import('firebase/firestore');
-        const { db } = await import('../config/firebase');
+        // Flutter JavaScript Bridge 확인
+        if (typeof window !== 'undefined' && (window as any).flutterLocationBridge) {
+            const result = await (window as any).flutterLocationBridge.getLocationPermission();
+            return result.granted === true;
+        }
 
-        await updateDoc(doc(db, 'users', uid), {
-            role: newRole,
-            lastUpdated: new Date(),
-        });
+        // URL 파라미터 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const permissionParam = urlParams.get('locationPermission');
+        if (permissionParam === 'true') {
+            return true;
+        }
 
-        return true;
+        return false;
     } catch (error) {
-        console.error('사용자 역할 업데이트 실패:', error);
+        console.warn('Flutter 권한 확인 실패:', error);
         return false;
     }
 };
 
 /**
- * 새로운 매장관리자 계정을 생성합니다.
- * @param email 이메일
- * @param password 비밀번호
- * @param name 이름
- * @returns 성공 여부
+ * Flutter에서 전달받은 위치 정보를 가져오는 함수
+ * @returns Promise<Location | null>
  */
-export const createStoreOwnerAccount = async (
-    email: string,
-    password: string,
-    name: string
-): Promise<boolean> => {
+export const getFlutterLocation = async (): Promise<Location | null> => {
     try {
-        const { createUserWithEmailAndPassword } = await import('firebase/auth');
-        const { auth } = await import('../config/firebase');
-        const { doc, setDoc } = await import('firebase/firestore');
-        const { db } = await import('../config/firebase');
+        // Flutter JavaScript Bridge 확인
+        if (typeof window !== 'undefined' && (window as any).flutterLocationBridge) {
+            const result = await (window as any).flutterLocationBridge.getCurrentLocation();
+            if (result.success) {
+                return {
+                    latitude: result.latitude,
+                    longitude: result.longitude,
+                };
+            }
+        }
 
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        const user = userCredential.user;
+        // URL 파라미터에서 위치 정보 확인
+        const urlParams = new URLSearchParams(window.location.search);
+        const lat = urlParams.get('lat');
+        const lng = urlParams.get('lng');
 
-        await setDoc(doc(db, 'users', user.uid), {
-            email: user.email,
-            name: name,
-            role: 'store_owner',
-            stores: [],
-            createdAt: new Date(),
-            lastLoginAt: new Date(),
-        });
+        if (lat && lng) {
+            return {
+                latitude: parseFloat(lat),
+                longitude: parseFloat(lng),
+            };
+        }
 
-        return true;
+        return null;
     } catch (error) {
-        console.error('매장관리자 계정 생성 실패:', error);
-        return false;
+        console.warn('Flutter 위치 정보 가져오기 실패:', error);
+        return null;
     }
 };
