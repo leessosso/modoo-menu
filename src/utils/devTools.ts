@@ -9,6 +9,8 @@ interface DebugAuth {
     fixTestAccounts: () => Promise<void>;
     checkUserRole: (uid: string) => Promise<string | null>;
     updateExistingStoresLocation: () => Promise<void>;
+    addNearbyTestStores: () => Promise<void>;
+    addRealLocationTestStores: () => Promise<void>;
 }
 
 declare global {
@@ -134,6 +136,146 @@ const fixTestAccounts = async (): Promise<void> => {
     }
 };
 
+// 강서구 근처에 테스트용 가까운 매장 추가
+const addNearbyTestStores = async (): Promise<void> => {
+    console.log('🔧 강서구 근처 테스트 매장 추가 중...');
+
+    try {
+        const { collection, addDoc } = await import('firebase/firestore');
+        const { db } = await import('../config/firebase');
+
+        const storesRef = collection(db, 'stores');
+
+        // 강서구 근처 매장들 (실제 좌표)
+        const nearbyStores = [
+            {
+                name: '강서구 맛있는 치킨집',
+                description: '강서구에서 가장 맛있는 치킨집입니다',
+                address: '서울특별시 강서구 화곡동 123-45',
+                phone: '02-1234-5678',
+                businessHours: '매일 11:00-22:00',
+                isOpen: true,
+                ownerId: 'test_owner_1',
+                latitude: 37.5510,  // 강서구 화곡동
+                longitude: 126.8480,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: '강서구 커피숍',
+                description: '강서구에서 분위기 좋은 커피숍',
+                address: '서울특별시 강서구 마곡동 456-78',
+                phone: '02-2345-6789',
+                businessHours: '매일 07:00-21:00',
+                isOpen: true,
+                ownerId: 'test_owner_2',
+                latitude: 37.5530,  // 강서구 마곡동
+                longitude: 126.8500,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: '강서구 피자집',
+                description: '강서구에서 맛있는 피자를 만드는 곳',
+                address: '서울특별시 강서구 가양동 789-12',
+                phone: '02-3456-7890',
+                businessHours: '매일 12:00-23:00',
+                isOpen: true,
+                ownerId: 'test_owner_3',
+                latitude: 37.5490,  // 강서구 가양동
+                longitude: 126.8460,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        ];
+
+        for (const store of nearbyStores) {
+            await addDoc(storesRef, store);
+            console.log(`✅ ${store.name} 추가 완료`);
+        }
+
+        console.log('🎉 강서구 근처 테스트 매장 추가 완료!');
+        console.log('🔄 페이지를 새로고침합니다...');
+        setTimeout(() => window.location.reload(), 1000);
+
+    } catch (error) {
+        console.error('❌ 강서구 근처 테스트 매장 추가 실패:', error);
+    }
+};
+
+// 실제 GPS 위치 기반으로 테스트 매장 추가
+const addRealLocationTestStores = async (): Promise<void> => {
+    console.log('🔧 실제 GPS 위치 기반 테스트 매장 추가 중...');
+
+    try {
+        // 먼저 현재 위치 가져오기
+        const { getCurrentLocation } = await import('./locationHelper');
+        const userLocation = await getCurrentLocation();
+
+        console.log('📍 현재 GPS 위치:', userLocation);
+
+        const { collection, addDoc } = await import('firebase/firestore');
+        const { db } = await import('../config/firebase');
+
+        const storesRef = collection(db, 'stores');
+
+        // 현재 위치 기준으로 가까운 매장들 생성
+        const nearbyStores = [
+            {
+                name: '현재 위치 근처 치킨집',
+                description: '현재 위치에서 가까운 치킨집입니다',
+                address: `실제 GPS 근처 (${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)})`,
+                phone: '02-1234-5678',
+                businessHours: '매일 11:00-22:00',
+                isOpen: true,
+                ownerId: 'test_owner_1',
+                latitude: userLocation.latitude + 0.001,  // 약 100m 거리
+                longitude: userLocation.longitude + 0.001,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: '현재 위치 근처 커피숍',
+                description: '현재 위치에서 가까운 커피숍입니다',
+                address: `실제 GPS 근처 (${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)})`,
+                phone: '02-2345-6789',
+                businessHours: '매일 07:00-21:00',
+                isOpen: true,
+                ownerId: 'test_owner_2',
+                latitude: userLocation.latitude - 0.002,  // 약 200m 거리
+                longitude: userLocation.longitude - 0.002,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+            {
+                name: '현재 위치 근처 피자집',
+                description: '현재 위치에서 가까운 피자집입니다',
+                address: `실제 GPS 근처 (${userLocation.latitude.toFixed(6)}, ${userLocation.longitude.toFixed(6)})`,
+                phone: '02-3456-7890',
+                businessHours: '매일 12:00-23:00',
+                isOpen: true,
+                ownerId: 'test_owner_3',
+                latitude: userLocation.latitude + 0.003,  // 약 300m 거리
+                longitude: userLocation.longitude - 0.001,
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            },
+        ];
+
+        for (const store of nearbyStores) {
+            await addDoc(storesRef, store);
+            console.log(`✅ ${store.name} 추가 완료`);
+        }
+
+        console.log('🎉 실제 GPS 위치 기반 테스트 매장 추가 완료!');
+        console.log('🔄 페이지를 새로고침합니다...');
+        setTimeout(() => window.location.reload(), 1000);
+
+    } catch (error) {
+        console.error('❌ 실제 GPS 위치 기반 테스트 매장 추가 실패:', error);
+    }
+};
+
 // 기존 매장들의 위치 정보 일괄 업데이트
 const updateExistingStoresLocation = async (): Promise<void> => {
     console.log('🔧 기존 매장 위치 정보 업데이트 중...');
@@ -206,6 +348,8 @@ const initializeDevTools = (): void => {
             fixTestAccounts,
             checkUserRole,
             updateExistingStoresLocation,
+            addNearbyTestStores,
+            addRealLocationTestStores,
         };
     }
 };

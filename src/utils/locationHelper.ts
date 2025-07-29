@@ -21,8 +21,8 @@ export const getCurrentLocation = (): Promise<Location> => {
             },
             (error) => {
                 console.warn('위치 가져오기 실패:', error);
-                // 테스트용 기본 위치 (서울 중심부)
-                resolve({ latitude: 37.5665, longitude: 126.9780 });
+                // 실제 위치 가져오기 실패 시에만 기본 위치 사용
+                reject(new Error('실제 위치를 가져올 수 없습니다.'));
             },
             {
                 timeout: 10000,

@@ -48,11 +48,11 @@ const StoreRegisterScreen: React.FC = () => {
       const location = await getCurrentLocation();
       setCurrentLocation(location);
 
-      // 현재 위치를 기반으로 주소 자동 설정 (테스트용)
-      const testAddress = `서울특별시 강남구 테헤란로 123 (현재 위치 기반)`;
+      // 실제 위치를 기반으로 주소 설정 (실제 GPS 사용)
+      const actualAddress = `실제 GPS 위치 기반 (${location.latitude.toFixed(6)}, ${location.longitude.toFixed(6)})`;
       setStoreData(prev => ({
         ...prev,
-        address: testAddress,
+        address: actualAddress,
         latitude: location.latitude,
         longitude: location.longitude,
       }));
