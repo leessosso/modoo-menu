@@ -11,6 +11,7 @@ import {
   Divider,
   Chip,
   Stack,
+  Alert,
 } from '@mui/material';
 import {
   Restaurant,
@@ -37,6 +38,7 @@ const DashboardScreen: React.FC = () => {
   const [userLocation, setUserLocation] = useState<Location | null>(null);
   const [isLocationLoading, setIsLocationLoading] = useState(true);
   const [nearbyStoresReady, setNearbyStoresReady] = useState(false);
+  const [locationError, setLocationError] = useState<string | null>(null);
 
   // WebView 렌더링 최적화
   useEffect(() => {
@@ -50,9 +52,12 @@ const DashboardScreen: React.FC = () => {
         setIsLocationLoading(true);
         const location = await getCurrentLocation();
         setUserLocation(location);
+        console.log('📍 실제 GPS 위치 설정됨:', location);
       } catch (error) {
         console.warn('위치 가져오기 실패:', error);
-        setUserLocation({ latitude: 37.5665, longitude: 126.9780 });
+        setLocationError('위치 권한이 필요합니다. 브라우저 설정에서 위치 권한을 허용해주세요.');
+        // 실제 GPS 실패 시 기본 위치 사용하지 않음
+        setUserLocation(null);
       } finally {
         setIsLocationLoading(false);
       }
@@ -205,6 +210,17 @@ const DashboardScreen: React.FC = () => {
           </Box>
           <Divider sx={{ mb: UI_CONSTANTS.SPACING.MD }} />
 
+          {locationError && (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                📍 위치 권한이 필요합니다
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                가까운 매장을 찾으려면 브라우저 설정에서 위치 권한을 허용해주세요.
+              </Typography>
+            </Alert>
+          )}
+
           {isLocationLoading ? (
             <Box sx={{ textAlign: 'center', py: 3 }}>
               <Typography variant="body2" color="text.secondary">
@@ -214,7 +230,7 @@ const DashboardScreen: React.FC = () => {
           ) : nearbyStores.length === 0 ? (
             <Box sx={{ textAlign: 'center', py: 3 }}>
               <Typography variant="body2" color="text.secondary">
-                주변에 등록된 매장이 없습니다
+                {locationError ? "위치 권한을 허용하면 가까운 매장을 찾을 수 있습니다." : "주변에 등록된 매장이 없습니다"}
               </Typography>
             </Box>
           ) : (

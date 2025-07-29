@@ -163,8 +163,9 @@ const CustomerStoreListScreen: React.FC = () => {
                 setLocationError(null);
             } catch (error: any) {
                 setLocationError(error.message);
-                console.warn('위치 가져오기 실패, 테스트 모드로 진행:', error);
-                setUserLocation({ latitude: 37.5665, longitude: 126.9780 });
+                console.warn('위치 가져오기 실패:', error);
+                // 실제 GPS 실패 시 기본 위치 사용하지 않음
+                setUserLocation(null);
             } finally {
                 setIsLocationLoading(false);
             }
