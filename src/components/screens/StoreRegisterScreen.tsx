@@ -53,6 +53,8 @@ const StoreRegisterScreen: React.FC = () => {
       setStoreData(prev => ({
         ...prev,
         address: testAddress,
+        latitude: location.latitude,
+        longitude: location.longitude,
       }));
 
     } catch (error: any) {
@@ -61,6 +63,11 @@ const StoreRegisterScreen: React.FC = () => {
     } finally {
       setIsLocationLoading(false);
     }
+  }, []);
+
+  // 지도에서 위치 선택 (개발 중)
+  const handleSelectLocationOnMap = useCallback(() => {
+    alert('지도에서 위치 선택 기능은 곧 개발될 예정입니다!\n\n현재는 "현재 위치 사용" 버튼을 이용해주세요.');
   }, []);
 
   // 주소를 좌표로 변환
@@ -170,16 +177,24 @@ const StoreRegisterScreen: React.FC = () => {
                 📍 위치 정보
               </Typography>
 
-              {/* 현재 위치 버튼 */}
-              <Button
-                variant="outlined"
-                startIcon={isLocationLoading ? <CircularProgress size={20} /> : <MyLocationIcon />}
-                onClick={handleGetCurrentLocation}
-                disabled={isLocationLoading}
-                sx={{ mb: 2 }}
-              >
-                {isLocationLoading ? '위치 확인 중...' : '현재 위치 사용'}
-              </Button>
+              {/* 위치 설정 버튼들 */}
+              <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+                <Button
+                  variant="outlined"
+                  startIcon={isLocationLoading ? <CircularProgress size={20} /> : <MyLocationIcon />}
+                  onClick={handleGetCurrentLocation}
+                  disabled={isLocationLoading}
+                >
+                  {isLocationLoading ? '위치 확인 중...' : '현재 위치 사용'}
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleSelectLocationOnMap}
+                  disabled={isLocationLoading}
+                >
+                  🗺️ 지도에서 선택
+                </Button>
+              </Box>
 
               {currentLocation && (
                 <Alert severity="success" sx={{ mb: 2 }}>

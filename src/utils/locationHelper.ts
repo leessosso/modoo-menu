@@ -1,4 +1,5 @@
 import type { Location } from '../types/store';
+import { googleMapsConfig } from '../config/firebase';
 
 /**
  * 현재 위치를 가져오는 함수
@@ -59,14 +60,46 @@ export const calculateDistance = (
 };
 
 /**
- * 주소를 좌표로 변환하는 함수 (Geocoding)
+ * 주소를 좌표로 변환하는 함수 (실제 Google Maps Geocoding API 사용)
  * @param address 주소
  * @returns Promise<Location>
  */
 export const geocodeAddress = async (address: string): Promise<Location> => {
     try {
-        // 실제 구현에서는 Google Maps Geocoding API 또는 다른 서비스 사용
-        // 현재는 테스트용으로 랜덤 좌표 반환
+        // Google Maps API 키가 없으면 테스트 모드로 진행
+        if (!googleMapsConfig.apiKey) {
+            console.warn('Google Maps API 키가 없어 테스트 모드로 진행합니다.');
+            return await geocodeAddressTest(address);
+        }
+
+        const url = `${googleMapsConfig.geocodingApiUrl}?address=${encodeURIComponent(address)}&key=${googleMapsConfig.apiKey}`;
+
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (data.status === 'OK' && data.results.length > 0) {
+            const location = data.results[0].geometry.location;
+            return {
+                latitude: location.lat,
+                longitude: location.lng,
+            };
+        } else {
+            throw new Error(`Geocoding 실패: ${data.status} - ${data.error_message || '알 수 없는 오류'}`);
+        }
+    } catch (error) {
+        console.error('실제 Geocoding 실패, 테스트 모드로 진행:', error);
+        return await geocodeAddressTest(address);
+    }
+};
+
+/**
+ * 테스트용 주소 변환 함수 (기존 로직)
+ * @param address 주소
+ * @returns Promise<Location>
+ */
+const geocodeAddressTest = async (address: string): Promise<Location> => {
+    try {
+        // 테스트용으로 랜덤 좌표 반환
         const baseLat = 37.5665;
         const baseLon = 126.9780;
 
@@ -84,7 +117,7 @@ export const geocodeAddress = async (address: string): Promise<Location> => {
             longitude: baseLon + lonOffset,
         };
     } catch (error) {
-        console.error('주소 변환 실패:', error);
+        console.error('테스트 주소 변환 실패:', error);
         throw new Error('주소를 좌표로 변환할 수 없습니다.');
     }
 };

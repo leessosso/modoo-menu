@@ -26,6 +26,7 @@ import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import { useStoreStore } from '../../stores/storeStore';
 import { getCurrentLocation, calculateDistance, formatDistance } from '../../utils/locationHelper';
+import { googleMapsConfig } from '../../config/firebase';
 import { optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
 import type { Store, StoreWithDistance, Location } from '../../types/store';
 
@@ -278,6 +279,11 @@ const CustomerStoreListScreen: React.FC = () => {
                             {storesWithoutLocation > 0 && (
                                 <Alert severity="info" sx={{ mt: 1 }}>
                                     📍 위치 정보가 없는 매장 {storesWithoutLocation}개가 거리순 정렬에서 제외됩니다
+                                </Alert>
+                            )}
+                            {!googleMapsConfig.apiKey && (
+                                <Alert severity="warning" sx={{ mt: 1 }}>
+                                    ⚠️ Google Maps API 키가 설정되지 않아 테스트 모드로 실행됩니다
                                 </Alert>
                             )}
                         </CardContent>
