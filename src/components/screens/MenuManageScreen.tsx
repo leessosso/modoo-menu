@@ -37,7 +37,7 @@ import {
     Category as CategoryIcon,
 } from '@mui/icons-material';
 import { useStoreStore } from '../../stores/storeStore';
-import DashboardHeader from '../common/DashboardHeader';
+import AppHeader from '../common/AppHeader';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import type { MenuItem as MenuItemType, CreateMenuItemData } from '../../types/store';
@@ -256,7 +256,7 @@ const MenuManageScreen: React.FC = () => {
     if (stores.length === 0) {
         return (
             <Box sx={{ p: 3 }}>
-                <DashboardHeader title="메뉴 관리" />
+                <AppHeader title="메뉴 관리" />
                 <EmptyState
                     icon={<MenuIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
                     title="등록된 매장이 없습니다"
@@ -285,7 +285,7 @@ const MenuManageScreen: React.FC = () => {
     if (categories.length === 0) {
         return (
             <Box sx={{ p: 3 }}>
-                <DashboardHeader title="메뉴 관리" />
+                <AppHeader title="메뉴 관리" />
                 <EmptyState
                     icon={<CategoryIcon sx={{ fontSize: 64, color: 'text.secondary' }} />}
                     title="카테고리가 없습니다"
@@ -299,7 +299,7 @@ const MenuManageScreen: React.FC = () => {
 
     return (
         <Box sx={{ p: 3 }}>
-            <DashboardHeader title="메뉴 관리" />
+            <AppHeader title="메뉴 관리" />
 
             {error && (
                 <Alert severity="error" sx={{ mb: 2 }}>

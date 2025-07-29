@@ -9,9 +9,11 @@ import {
     Chip,
     Alert,
 } from '@mui/material';
+import AppHeader from '../common/AppHeader';
 import { useStoreStore } from '../../stores/storeStore';
 import { getCurrentLocation, calculateDistance, formatDistance } from '../../utils/locationHelper';
 import { checkFlutterLocationPermission, getFlutterLocation, optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
+
 import type { Store, StoreWithDistance, Location } from '../../types/store';
 
 const CustomerStoreListScreen: React.FC = () => {
@@ -120,160 +122,150 @@ const CustomerStoreListScreen: React.FC = () => {
     };
 
     return (
-        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 2 }}>
-            {/* 헤더 */}
-            <Box sx={{ display: 'flex', alignItems: 'center', mb: 3 }}>
-                <Button
-                    variant="text"
-                    onClick={handleBackClick}
-                    sx={{ mr: 2 }}
-                >
-                    ← 뒤로
-                </Button>
-                <Typography variant="h5" component="h1">
-                    🏪 매장 목록
-                </Typography>
-            </Box>
+        <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+            <AppHeader title="🏪 매장 목록" onBackClick={handleBackClick} />
 
-            {/* 위치 정보 */}
-            {userLocation && (
-                <Card sx={{ mb: 3, bgcolor: 'primary.50' }}>
-                    <CardContent sx={{ pb: '16px !important' }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
-                                📍 현재 위치에서 가까운 순으로 표시됩니다
-                            </Typography>
-                        </Box>
-                        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                            위치: {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
-                        </Typography>
-                        {storesWithoutLocation > 0 && (
-                            <Alert severity="info" sx={{ mt: 1 }}>
-                                📍 위치 정보가 없는 매장 {storesWithoutLocation}개가 거리순 정렬에서 제외됩니다
-                            </Alert>
-                        )}
-                    </CardContent>
-                </Card>
-            )}
-
-            {/* 위치 로딩 */}
-            {isLocationLoading && (
-                <Box sx={{ textAlign: 'center', py: 3 }}>
-                    <Typography variant="body2" color="text.secondary">
-                        위치 정보를 가져오는 중...
-                    </Typography>
-                </Box>
-            )}
-
-            {/* 위치 에러 */}
-            {locationError && (
-                <Alert severity="warning" sx={{ mb: 3 }}>
-                    <Typography variant="body2" gutterBottom>
-                        📍 위치 정보를 가져올 수 없습니다
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                        {locationError}
-                    </Typography>
-                </Alert>
-            )}
-
-            {/* 매장 목록 */}
-            <Box data-testid="store-list-container">
-                {storesWithDistance.map((store) => (
-                    <Card
-                        key={store.id}
-                        sx={{
-                            mb: 2,
-                            cursor: 'pointer',
-                            '&:hover': { bgcolor: 'action.hover' },
-                        }}
-                        onClick={() => handleStoreSelect(store)}
-                    >
+            <Box sx={{ p: 2 }}>
+                {/* 위치 정보 */}
+                {userLocation && (
+                    <Card sx={{ mb: 3, bgcolor: 'primary.50' }}>
                         <CardContent sx={{ pb: '16px !important' }}>
-                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                                <Box sx={{ flex: 1 }}>
-                                    <Typography variant="h6" gutterBottom>
-                                        {store.name}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                                        {store.description}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        📍 {store.address}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        📞 {store.phone}
-                                    </Typography>
-                                    <Typography variant="body2" color="text.secondary">
-                                        🕒 {store.businessHours}
-                                    </Typography>
-                                </Box>
-                                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
-                                    <Chip
-                                        size="small"
-                                        color={store.isOpen ? 'success' : 'error'}
-                                        label={store.isOpen ? '영업중' : '영업종료'}
-                                    />
-                                    {store.distance && (
-                                        <Chip
-                                            size="small"
-                                            label={formatDistance(store.distance)}
-                                            variant="outlined"
-                                            color="primary"
-                                        />
-                                    )}
-                                </Box>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                <Typography variant="body2" color="primary.main" sx={{ fontWeight: 500 }}>
+                                    📍 현재 위치에서 가까운 순으로 표시됩니다
+                                </Typography>
                             </Box>
-
-                            {store.categories && store.categories.length > 0 && (
-                                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
-                                    <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
-                                        카테고리:
-                                    </Typography>
-                                    {store.categories.slice(0, 3).map((category) => (
-                                        <Chip
-                                            key={category.id}
-                                            size="small"
-                                            label={`${category.icon} ${category.name}`}
-                                            variant="outlined"
-                                        />
-                                    ))}
-                                    {store.categories.length > 3 && (
-                                        <Chip
-                                            size="small"
-                                            label={`+${store.categories.length - 3}`}
-                                            variant="outlined"
-                                        />
-                                    )}
-                                </Box>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                위치: {userLocation.latitude.toFixed(6)}, {userLocation.longitude.toFixed(6)}
+                            </Typography>
+                            {storesWithoutLocation > 0 && (
+                                <Alert severity="info" sx={{ mt: 1 }}>
+                                    📍 위치 정보가 없는 매장 {storesWithoutLocation}개가 거리순 정렬에서 제외됩니다
+                                </Alert>
                             )}
                         </CardContent>
-
-                        <Box sx={{ px: 2, pb: 2 }}>
-                            <Button
-                                variant="contained"
-                                fullWidth
-                                disabled={!store.isOpen}
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleStoreSelect(store);
-                                }}
-                            >
-                                {store.isOpen ? '메뉴 보기' : '영업종료'}
-                            </Button>
-                        </Box>
                     </Card>
-                ))}
-            </Box>
+                )}
 
-            {/* 매장이 없을 때 */}
-            {storesWithDistance.length === 0 && !isLocationLoading && (
-                <Box sx={{ textAlign: 'center', py: 3 }}>
-                    <Typography variant="body2" color="text.secondary">
-                        등록된 매장이 없습니다
-                    </Typography>
+                {/* 위치 로딩 */}
+                {isLocationLoading && (
+                    <Box sx={{ textAlign: 'center', py: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            위치 정보를 가져오는 중...
+                        </Typography>
+                    </Box>
+                )}
+
+                {/* 위치 에러 */}
+                {locationError && (
+                    <Alert severity="warning" sx={{ mb: 3 }}>
+                        <Typography variant="body2" gutterBottom>
+                            �� 위치 정보를 가져올 수 없습니다
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                            {locationError}
+                        </Typography>
+                    </Alert>
+                )}
+
+                {/* 매장 목록 */}
+                <Box data-testid="store-list-container">
+                    {storesWithDistance.map((store) => (
+                        <Card
+                            key={store.id}
+                            sx={{
+                                mb: 2,
+                                cursor: 'pointer',
+                                '&:hover': { bgcolor: 'action.hover' },
+                            }}
+                            onClick={() => handleStoreSelect(store)}
+                        >
+                            <CardContent sx={{ pb: '16px !important' }}>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
+                                    <Box sx={{ flex: 1 }}>
+                                        <Typography variant="h6" gutterBottom>
+                                            {store.name}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                                            {store.description}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            📍 {store.address}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            📞 {store.phone}
+                                        </Typography>
+                                        <Typography variant="body2" color="text.secondary">
+                                            🕒 {store.businessHours}
+                                        </Typography>
+                                    </Box>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1 }}>
+                                        <Chip
+                                            size="small"
+                                            color={store.isOpen ? 'success' : 'error'}
+                                            label={store.isOpen ? '영업중' : '영업종료'}
+                                        />
+                                        {store.distance && (
+                                            <Chip
+                                                size="small"
+                                                label={formatDistance(store.distance)}
+                                                variant="outlined"
+                                                color="primary"
+                                            />
+                                        )}
+                                    </Box>
+                                </Box>
+
+                                {store.categories && store.categories.length > 0 && (
+                                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mt: 1 }}>
+                                        <Typography variant="body2" color="text.secondary" sx={{ mr: 1 }}>
+                                            카테고리:
+                                        </Typography>
+                                        {store.categories.slice(0, 3).map((category) => (
+                                            <Chip
+                                                key={category.id}
+                                                size="small"
+                                                label={`${category.icon} ${category.name}`}
+                                                variant="outlined"
+                                            />
+                                        ))}
+                                        {store.categories.length > 3 && (
+                                            <Chip
+                                                size="small"
+                                                label={`+${store.categories.length - 3}`}
+                                                variant="outlined"
+                                            />
+                                        )}
+                                    </Box>
+                                )}
+                            </CardContent>
+
+                            <Box sx={{ px: 2, pb: 2 }}>
+                                <Button
+                                    variant="contained"
+                                    fullWidth
+                                    disabled={!store.isOpen}
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleStoreSelect(store);
+                                    }}
+                                >
+                                    {store.isOpen ? '메뉴 보기' : '영업종료'}
+                                </Button>
+                            </Box>
+                        </Card>
+                    ))}
                 </Box>
-            )}
+
+                {/* 매장이 없을 때 */}
+                {storesWithDistance.length === 0 && !isLocationLoading && (
+                    <Box sx={{ textAlign: 'center', py: 3 }}>
+                        <Typography variant="body2" color="text.secondary">
+                            등록된 매장이 없습니다
+                        </Typography>
+                    </Box>
+                )}
+            </Box>
         </Box>
     );
 };

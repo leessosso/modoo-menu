@@ -21,7 +21,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
-import DashboardHeader from '../common/DashboardHeader';
+import AppHeader from '../common/AppHeader';
 import EmptyState from '../common/EmptyState';
 import { UI_CONSTANTS, APP_CONFIG } from '../../constants';
 import { optimizeWebViewTransition } from '../../utils/webviewHelper';
@@ -147,7 +147,7 @@ const StoreOwnerDashboard: React.FC = () => {
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* 헤더 */}
-      <DashboardHeader
+      <AppHeader
         title="🏪 매장관리자 대시보드"
         onLogout={handleLogout}
       />

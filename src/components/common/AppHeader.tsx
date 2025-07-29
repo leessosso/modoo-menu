@@ -1,12 +1,13 @@
 import React from 'react';
-import { 
-    Box, 
-    Container, 
-    Typography, 
+import {
+    Box,
+    Container,
+    Typography,
     Avatar,
-    IconButton
+    IconButton,
+    Button
 } from '@mui/material';
-import { 
+import {
     Person
 } from '@mui/icons-material';
 
@@ -14,17 +15,19 @@ import { UI_CONSTANTS } from '../../constants';
 import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 import { useNavigate } from 'react-router-dom';
 
-interface DashboardHeaderProps {
+interface AppHeaderProps {
     title: string;
     icon?: string;
     maxWidth?: 'sm' | 'md' | 'lg' | 'xl';
     onLogout?: () => void;
+    onBackClick?: () => void;
 }
 
-const DashboardHeader: React.FC<DashboardHeaderProps> = ({
+const AppHeader: React.FC<AppHeaderProps> = ({
     title,
     icon = '',
-    maxWidth = 'lg'
+    maxWidth = 'lg',
+    onBackClick
 }) => {
     // user 정보는 UserMenuScreen에서 처리
     const navigate = useNavigate();
@@ -46,9 +49,27 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
         >
             <Container maxWidth={maxWidth}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="h4" component="h1">
-                        {icon} {title}
-                    </Typography>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                        {onBackClick && (
+                            <Button
+                                variant="text"
+                                onClick={onBackClick}
+                                sx={{
+                                    color: 'white',
+                                    minWidth: 'auto',
+                                    px: 1,
+                                    '&:hover': {
+                                        bgcolor: 'rgba(255, 255, 255, 0.1)',
+                                    }
+                                }}
+                            >
+                                ← 뒤로
+                            </Button>
+                        )}
+                        <Typography variant="h4" component="h1">
+                            {icon} {title}
+                        </Typography>
+                    </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                         <IconButton
                             onClick={handleUserMenuClick}
@@ -70,4 +91,4 @@ const DashboardHeader: React.FC<DashboardHeaderProps> = ({
     );
 };
 
-export default DashboardHeader; 
+export default AppHeader; 

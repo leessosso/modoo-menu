@@ -1,7 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import {
   Box,
-  Container,
   Paper,
   Typography,
   TextField,
@@ -16,6 +15,7 @@ import {
   MyLocation as MyLocationIcon,
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import AppHeader from '../common/AppHeader';
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import { getCurrentLocation, geocodeAddress } from '../../utils/locationHelper';
@@ -280,75 +280,76 @@ const StoreRegisterScreen: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md" sx={{ py: UI_CONSTANTS.SPACING.LG }}>
-      <Paper sx={{ p: UI_CONSTANTS.SPACING.LG }}>
-        <Typography variant="h4" component="h1" gutterBottom color="primary" textAlign="center">
-          🏪 새 매장 등록
-        </Typography>
-        <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
-          매장 정보를 입력하여 새로운 매장을 등록하세요
-        </Typography>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppHeader title="🏪 새 매장 등록" onBackClick={() => navigate('/store-dashboard')} />
 
-        {/* 스테퍼 */}
-        <Stepper activeStep={activeStep} sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
-          {STEPPER_STEPS.STORE_REGISTER.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
+      <Box sx={{ p: 2 }}>
+        <Paper sx={{ p: UI_CONSTANTS.SPACING.LG }}>
+          <Typography variant="body1" color="text.secondary" textAlign="center" sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+            매장 정보를 입력하여 새로운 매장을 등록하세요
+          </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: UI_CONSTANTS.SPACING.MD }}>
-            {error}
-          </Alert>
-        )}
+          {/* 스테퍼 */}
+          <Stepper activeStep={activeStep} sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+            {STEPPER_STEPS.STORE_REGISTER.map((label) => (
+              <Step key={label}>
+                <StepLabel>{label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
 
-        {/* 스텝 내용 */}
-        <Box sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
-          {renderStepContent(activeStep)}
-        </Box>
+          {error && (
+            <Alert severity="error" sx={{ mb: UI_CONSTANTS.SPACING.MD }}>
+              {error}
+            </Alert>
+          )}
 
-        {/* 네비게이션 버튼 */}
-        <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Button
-            onClick={handleBack}
-            disabled={activeStep === 0}
-            variant="outlined"
-          >
-            이전
-          </Button>
+          {/* 스텝 내용 */}
+          <Box sx={{ mb: UI_CONSTANTS.SPACING.LG }}>
+            {renderStepContent(activeStep)}
+          </Box>
 
-          <Box sx={{ display: 'flex', gap: UI_CONSTANTS.SPACING.SM }}>
+          {/* 네비게이션 버튼 */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
             <Button
+              onClick={handleBack}
+              disabled={activeStep === 0}
               variant="outlined"
-              onClick={() => navigate('/store-dashboard')}
             >
-              취소
+              이전
             </Button>
 
-            {activeStep === STEPPER_STEPS.STORE_REGISTER.length - 1 ? (
+            <Box sx={{ display: 'flex', gap: UI_CONSTANTS.SPACING.SM }}>
               <Button
-                variant="contained"
-                onClick={handleSubmit}
-                disabled={isLoading}
-                startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
+                variant="outlined"
+                onClick={() => navigate('/store-dashboard')}
               >
-                {isLoading ? '등록 중...' : '매장 등록'}
+                취소
               </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={!isStepValid(activeStep)}
-              >
-                다음
-              </Button>
-            )}
+
+              {activeStep === STEPPER_STEPS.STORE_REGISTER.length - 1 ? (
+                <Button
+                  variant="contained"
+                  onClick={handleSubmit}
+                  disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress size={20} /> : undefined}
+                >
+                  {isLoading ? '등록 중...' : '매장 등록'}
+                </Button>
+              ) : (
+                <Button
+                  variant="contained"
+                  onClick={handleNext}
+                  disabled={!isStepValid(activeStep)}
+                >
+                  다음
+                </Button>
+              )}
+            </Box>
           </Box>
-        </Box>
-      </Paper>
-    </Container>
+        </Paper>
+      </Box>
+    </Box>
   );
 };
 

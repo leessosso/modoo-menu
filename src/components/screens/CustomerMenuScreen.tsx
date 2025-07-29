@@ -18,7 +18,6 @@ import {
     Container,
     Tabs,
     Tab,
-    Badge,
     Paper,
 } from '@mui/material';
 import {
@@ -34,6 +33,7 @@ import {
 } from '@mui/icons-material';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
+import AppHeader from '../common/AppHeader';
 import { useStoreStore } from '../../stores/storeStore';
 import { optimizeWebViewTransition } from '../../utils/webviewHelper';
 import type { Store, MenuItem } from '../../types/store';
@@ -195,7 +195,7 @@ const CustomerMenuScreen: React.FC = () => {
     } = useStoreStore();
 
     const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-    const [cartItems, setCartItems] = useState<MenuItem[]>([]);
+
 
     // WebView 렌더링 최적화
     useEffect(() => {
@@ -242,7 +242,6 @@ const CustomerMenuScreen: React.FC = () => {
     };
 
     const handleAddToCart = (menuItem: MenuItem) => {
-        setCartItems(prev => [...prev, menuItem]);
         // TODO: 실제 장바구니 시스템 구현
         console.log('장바구니에 추가:', menuItem);
     };
@@ -341,27 +340,9 @@ const CustomerMenuScreen: React.FC = () => {
 
     return (
         <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-            {/* 헤더 */}
-            <AppBar position="static">
-                <Toolbar>
-                    <IconButton
-                        edge="start"
-                        color="inherit"
-                        onClick={handleBack}
-                        sx={{ mr: 2 }}
-                    >
-                        <ArrowBackIcon />
-                    </IconButton>
-                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                        {currentStore.name}
-                    </Typography>
-                    <Badge badgeContent={cartItems.length} color="secondary">
-                        <CartIcon />
-                    </Badge>
-                </Toolbar>
-            </AppBar>
+            <AppHeader title={currentStore.name} onBackClick={handleBack} />
 
-            <Container maxWidth="md" sx={{ py: 2 }}>
+            <Box sx={{ p: 2 }}>
                 {/* 매장 정보 */}
                 <StoreInfoCard store={currentStore} />
 
@@ -417,7 +398,7 @@ const CustomerMenuScreen: React.FC = () => {
                         </Box>
                     )}
                 </Box>
-            </Container>
+            </Box>
         </Box>
     );
 };

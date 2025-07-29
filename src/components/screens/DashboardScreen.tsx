@@ -12,6 +12,7 @@ import {
 import { useAuthStore } from '../../stores/authStore';
 import { useStoreStore } from '../../stores/storeStore';
 import { APP_CONFIG } from '../../constants';
+import AppHeader from '../common/AppHeader';
 import { getCurrentLocation, calculateDistance, formatDistance } from '../../utils/locationHelper';
 import { checkFlutterLocationPermission, getFlutterLocation, optimizeWebViewTransition, optimizeWebViewDataLoading, optimizeWebViewListRendering } from '../../utils/webviewHelper';
 import type { Store, StoreWithDistance, Location } from '../../types/store';
@@ -186,127 +187,131 @@ const DashboardScreen: React.FC = () => {
   ], [handleQRScanClick, handleStoreListClick, handleOrderHistoryClick, handleFavoritesClick]);
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', p: 2 }}>
-      {/* 헤더 */}
-      <Box sx={{ textAlign: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1" gutterBottom color="primary">
-          🍽️ {APP_CONFIG.NAME}
-        </Typography>
-        <Typography variant="h6" gutterBottom>
-          안녕하세요, {user?.name}님! 👋
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          오늘은 어떤 매장에서 주문하실 건가요?
-        </Typography>
-      </Box>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+      <AppHeader
+        title={`🍽️ ${APP_CONFIG.NAME}`}
+        maxWidth="md"
+      />
 
-      {/* 가까운 매장 */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-            <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
-              🏪 가까운 매장
-            </Typography>
-            <Button
-              variant="text"
-              size="small"
-              onClick={handleStoreListClick}
-              sx={{ color: 'primary.main' }}
-            >
-              전체 보기
-            </Button>
-          </Box>
+      <Box sx={{ p: 2 }}>
+        {/* 환영 메시지 */}
+        <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Typography variant="h6" gutterBottom>
+            안녕하세요, {user?.name}님! 👋
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            오늘은 어떤 매장에서 주문하실 건가요?
+          </Typography>
+        </Box>
 
-          {locationError && (
-            <Alert severity="warning" sx={{ mb: 2 }}>
-              <Typography variant="body2" gutterBottom>
-                📍 위치 권한이 필요합니다
+        {/* 가까운 매장 */}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" gutterBottom sx={{ mb: 0 }}>
+                🏪 가까운 매장
               </Typography>
-              <Typography variant="body2" color="text.secondary">
-                가까운 매장을 찾으려면 브라우저 설정에서 위치 권한을 허용해주세요.
-              </Typography>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                현재 권한 상태: {permissionStatus === 'granted' ? '허용됨' : permissionStatus === 'denied' ? '거부됨' : '요청 대기 중'}
-              </Typography>
-            </Alert>
-          )}
-
-          {isLocationLoading ? (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                위치 정보를 가져오는 중...
-              </Typography>
+              <Button
+                variant="text"
+                size="small"
+                onClick={handleStoreListClick}
+                sx={{ color: 'primary.main' }}
+              >
+                전체 보기
+              </Button>
             </Box>
-          ) : nearbyStores.length === 0 ? (
-            <Box sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="body2" color="text.secondary">
-                {locationError ? "위치 권한을 허용하면 가까운 매장을 찾을 수 있습니다." : "주변에 등록된 매장이 없습니다"}
-              </Typography>
-            </Box>
-          ) : (
-            <Box data-testid="nearby-stores-container">
-              {nearbyStores.map((store) => (
-                <Card
-                  key={store.id}
-                  sx={{
-                    mb: 2,
-                    cursor: 'pointer',
-                    '&:hover': { bgcolor: 'action.hover' },
-                  }}
-                  onClick={() => handleStoreSelect(store)}
-                >
-                  <CardContent sx={{ pb: '16px !important' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <Box sx={{ flex: 1 }}>
-                        <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
-                          {store.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                          {store.description}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          📍 {store.address}
-                        </Typography>
+
+            {locationError && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                <Typography variant="body2" gutterBottom>
+                  📍 위치 권한이 필요합니다
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  가까운 매장을 찾으려면 브라우저 설정에서 위치 권한을 허용해주세요.
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                  현재 권한 상태: {permissionStatus === 'granted' ? '허용됨' : permissionStatus === 'denied' ? '거부됨' : '요청 대기 중'}
+                </Typography>
+              </Alert>
+            )}
+
+            {isLocationLoading ? (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  위치 정보를 가져오는 중...
+                </Typography>
+              </Box>
+            ) : nearbyStores.length === 0 ? (
+              <Box sx={{ textAlign: 'center', py: 3 }}>
+                <Typography variant="body2" color="text.secondary">
+                  {locationError ? "위치 권한을 허용하면 가까운 매장을 찾을 수 있습니다." : "주변에 등록된 매장이 없습니다"}
+                </Typography>
+              </Box>
+            ) : (
+              <Box data-testid="nearby-stores-container">
+                {nearbyStores.map((store) => (
+                  <Card
+                    key={store.id}
+                    sx={{
+                      mb: 2,
+                      cursor: 'pointer',
+                      '&:hover': { bgcolor: 'action.hover' },
+                    }}
+                    onClick={() => handleStoreSelect(store)}
+                  >
+                    <CardContent sx={{ pb: '16px !important' }}>
+                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="h6" gutterBottom sx={{ mb: 1 }}>
+                            {store.name}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                            {store.description}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            📍 {store.address}
+                          </Typography>
+                        </Box>
+                        <Chip
+                          size="small"
+                          label={formatDistance(store.distance || 0)}
+                          variant="outlined"
+                          color="primary"
+                        />
                       </Box>
-                      <Chip
-                        size="small"
-                        label={formatDistance(store.distance || 0)}
-                        variant="outlined"
-                        color="primary"
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            )}
+          </CardContent>
+        </Card>
 
-      {/* 메뉴 그리드 */}
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
-        {menuItems.map((item, index) => (
-          <Card
-            key={index}
-            sx={{
-              cursor: 'pointer',
-              '&:hover': { bgcolor: 'action.hover' },
-            }}
-            onClick={item.onClick}
-          >
-            <CardContent sx={{ textAlign: 'center', py: 3 }}>
-              <Typography variant="h3" sx={{ mb: 2 }}>
-                {item.icon}
-              </Typography>
-              <Typography variant="h6" gutterBottom>
-                {item.title}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                {item.description}
-              </Typography>
-            </CardContent>
-          </Card>
-        ))}
+        {/* 메뉴 그리드 */}
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 2 }}>
+          {menuItems.map((item, index) => (
+            <Card
+              key={index}
+              sx={{
+                cursor: 'pointer',
+                '&:hover': { bgcolor: 'action.hover' },
+              }}
+              onClick={item.onClick}
+            >
+              <CardContent sx={{ textAlign: 'center', py: 3 }}>
+                <Typography variant="h3" sx={{ mb: 2 }}>
+                  {item.icon}
+                </Typography>
+                <Typography variant="h6" gutterBottom>
+                  {item.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {item.description}
+                </Typography>
+              </CardContent>
+            </Card>
+          ))}
+        </Box>
       </Box>
     </Box>
   );
